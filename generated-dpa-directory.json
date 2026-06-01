@@ -1,0 +1,311 @@
+{
+  "DE": {
+    "name": "BfDI",
+    "country": "DE",
+    "complaintUrl": "https://www.bfdi.bund.de/DE/Buerger/Inhalte/Allgemein/Beschwerde/Beschwerde.html",
+    "languages": [
+      "DE",
+      "EN"
+    ]
+  },
+  "FR": {
+    "name": "CNIL",
+    "country": "FR",
+    "complaintUrl": "https://www.cnil.fr/fr/plaintes",
+    "languages": [
+      "FR",
+      "EN"
+    ]
+  },
+  "IT": {
+    "name": "Garante",
+    "country": "IT",
+    "complaintUrl": "https://www.garanteprivacy.it/home/diritti/come-agire-per-tutelare-i-tuoi-dati-personali",
+    "languages": [
+      "IT",
+      "EN"
+    ]
+  },
+  "ES": {
+    "name": "AEPD",
+    "country": "ES",
+    "complaintUrl": "https://www.aepd.es/es/derechos-y-deberes/conoce-tus-derechos",
+    "languages": [
+      "ES",
+      "EN"
+    ]
+  },
+  "NL": {
+    "name": "Autoriteit Persoonsgegevens",
+    "country": "NL",
+    "complaintUrl": "https://autoriteitpersoonsgegevens.nl/nl/zelf-doen/privacyrechten/klacht-indienen-bij-de-ap",
+    "languages": [
+      "NL",
+      "EN"
+    ]
+  },
+  "BE": {
+    "name": "APD/GBA",
+    "country": "BE",
+    "complaintUrl": "https://www.autoriteprotectiondonnees.be/citoyen/agir/introduire-une-plainte",
+    "languages": [
+      "FR",
+      "NL",
+      "DE",
+      "EN"
+    ]
+  },
+  "AT": {
+    "name": "DSB",
+    "country": "AT",
+    "complaintUrl": "https://www.dsb.gv.at/beantragen-melden/beschwerde-beantragen",
+    "languages": [
+      "DE",
+      "EN"
+    ]
+  },
+  "PL": {
+    "name": "UODO",
+    "country": "PL",
+    "complaintUrl": "https://uodo.gov.pl/pl/83/155",
+    "languages": [
+      "PL",
+      "EN"
+    ]
+  },
+  "SE": {
+    "name": "IMY",
+    "country": "SE",
+    "complaintUrl": "https://www.imy.se/privatperson/utfora-och-begara/lamna-ett-klagomal/",
+    "languages": [
+      "SE",
+      "EN"
+    ]
+  },
+  "DK": {
+    "name": "Datatilsynet",
+    "country": "DK",
+    "complaintUrl": "https://www.datatilsynet.dk/borger/klage",
+    "languages": [
+      "DK",
+      "EN"
+    ]
+  },
+  "FI": {
+    "name": "Tietosuojavaltuutetun toimisto",
+    "country": "FI",
+    "complaintUrl": "https://tietosuoja.fi/en/notification-to-the-data-protection-ombudsman",
+    "languages": [
+      "FI",
+      "SE",
+      "EN"
+    ]
+  },
+  "IE": {
+    "name": "Irish DPC",
+    "country": "IE",
+    "complaintUrl": "https://forms.dataprotection.ie/contact",
+    "languages": [
+      "EN",
+      "GA"
+    ]
+  },
+  "PT": {
+    "name": "CNPD",
+    "country": "PT",
+    "complaintUrl": "https://www.cnpd.pt/direitos/exercer-direitos/",
+    "languages": [
+      "PT",
+      "EN"
+    ]
+  },
+  "GR": {
+    "name": "HDPA",
+    "country": "GR",
+    "complaintUrl": "https://www.dpa.gr/en/complaints",
+    "languages": [
+      "GR",
+      "EN"
+    ]
+  },
+  "CZ": {
+    "name": "UOOU",
+    "country": "CZ",
+    "complaintUrl": "https://www.uoou.cz/en/how-to-file-a-complaint/d-39329",
+    "languages": [
+      "CZ",
+      "EN"
+    ]
+  },
+  "RO": {
+    "name": "ANSPDCP",
+    "country": "RO",
+    "complaintUrl": "https://www.dataprotection.ro/index.jsp?page=Plangeri&lang=en",
+    "languages": [
+      "RO",
+      "EN"
+    ]
+  },
+  "HU": {
+    "name": "NAIH",
+    "country": "HU",
+    "complaintUrl": "https://www.naih.hu/panaszugyintezes",
+    "languages": [
+      "HU",
+      "EN"
+    ]
+  },
+  "LU": {
+    "name": "CNPD",
+    "country": "LU",
+    "complaintUrl": "https://cnpd.public.lu/en/particuliers/faire-valoir.html",
+    "languages": [
+      "FR",
+      "DE",
+      "EN"
+    ]
+  },
+  "HR": {
+    "name": "AZOP",
+    "country": "HR",
+    "complaintUrl": "https://azop.hr/prava-ispitanika/",
+    "languages": [
+      "HR",
+      "EN"
+    ]
+  },
+  "SK": {
+    "name": "UOOU SR",
+    "country": "SK",
+    "complaintUrl": "https://dataprotection.gov.sk/uoou/en/content/complaints",
+    "languages": [
+      "SK",
+      "EN"
+    ]
+  },
+  "SI": {
+    "name": "IP RS",
+    "country": "SI",
+    "complaintUrl": "https://www.ip-rs.si/en/",
+    "languages": [
+      "SI",
+      "EN"
+    ]
+  },
+  "BG": {
+    "name": "CPDP",
+    "country": "BG",
+    "complaintUrl": "https://www.cpdp.bg/en/index.php?p=rubric&aid=4",
+    "languages": [
+      "BG",
+      "EN"
+    ]
+  },
+  "LT": {
+    "name": "VDAI",
+    "country": "LT",
+    "complaintUrl": "https://vdai.lrv.lt/en/complaints",
+    "languages": [
+      "LT",
+      "EN"
+    ]
+  },
+  "LV": {
+    "name": "DVI",
+    "country": "LV",
+    "complaintUrl": "https://www.dvi.gov.lv/en/complaints",
+    "languages": [
+      "LV",
+      "EN"
+    ]
+  },
+  "EE": {
+    "name": "AKI",
+    "country": "EE",
+    "complaintUrl": "https://www.aki.ee/en/complaints",
+    "languages": [
+      "EE",
+      "EN"
+    ]
+  },
+  "CY": {
+    "name": "Commissioner for Personal Data Protection",
+    "country": "CY",
+    "complaintUrl": "http://www.dataprotection.gov.cy/dataprotection/dataprotection.nsf/page1i_en/page1i_en",
+    "languages": [
+      "GR",
+      "EN"
+    ]
+  },
+  "MT": {
+    "name": "IDPC",
+    "country": "MT",
+    "complaintUrl": "https://idpc.org.mt/complaints/",
+    "languages": [
+      "MT",
+      "EN"
+    ]
+  },
+  "UK": {
+    "name": "ICO",
+    "country": "UK",
+    "complaintUrl": "https://ico.org.uk/make-a-complaint/",
+    "languages": [
+      "EN"
+    ]
+  },
+  "US": {
+    "name": "CPPA",
+    "country": "US",
+    "complaintUrl": "https://cppa.ca.gov/consumer_complaints.html",
+    "languages": [
+      "EN"
+    ]
+  },
+  "BR": {
+    "name": "ANPD",
+    "country": "BR",
+    "complaintUrl": "https://www.gov.br/anpd/pt-br/canais_atendimento/cidadao-titular-de-dados",
+    "languages": [
+      "PT"
+    ]
+  },
+  "CH": {
+    "name": "FDPIC",
+    "country": "CH",
+    "complaintUrl": "https://www.edoeb.admin.ch/edoeb/en/home.html",
+    "languages": [
+      "DE",
+      "FR",
+      "IT",
+      "EN"
+    ]
+  },
+  "NO": {
+    "name": "Datatilsynet",
+    "country": "NO",
+    "complaintUrl": "https://www.datatilsynet.no/en/about-us/contact-us/",
+    "languages": [
+      "NO",
+      "EN"
+    ]
+  },
+  "IS": {
+    "name": "Persónuvernd",
+    "country": "IS",
+    "complaintUrl": "https://www.personuvernd.is/einstaklingar/kvartanir/",
+    "languages": [
+      "IS",
+      "EN"
+    ]
+  },
+  "LI": {
+    "name": "Datenschutzstelle",
+    "country": "LI",
+    "complaintUrl": "https://www.datenschutzstelle.li/beschwerde",
+    "languages": [
+      "DE",
+      "EN"
+    ]
+  }
+}

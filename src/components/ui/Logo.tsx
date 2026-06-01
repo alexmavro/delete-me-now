@@ -1,0 +1,22 @@
+// Brand mark: stop-octagon + raised hand. Fixed colours (theme-independent).
+export function Logo({ size = 28, className }: { size?: number; className?: string }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 100 100" className={className} aria-hidden="true">
+      <polygon
+        points="33,4.5 67,4.5 95.5,33 95.5,67 67,95.5 33,95.5 4.5,67 4.5,33"
+        fill="#0d9488"
+        stroke="#0b0e12"
+        strokeWidth="5"
+        strokeLinejoin="round"
+      />
+      <g fill="#0b0e12">
+        <rect x="31" y="33" width="8.5" height="29" rx="4.25" />
+        <rect x="41" y="28" width="8.5" height="34" rx="4.25" />
+        <rect x="51" y="31" width="8.5" height="31" rx="4.25" />
+        <rect x="61" y="36" width="8.5" height="26" rx="4.25" />
+        <rect x="28.5" y="50" width="43" height="30" rx="12" />
+        <rect x="19" y="52" width="9" height="25" rx="4.5" transform="rotate(-33 23.5 64.5)" />
+      </g>
+    </svg>
+  );
+}

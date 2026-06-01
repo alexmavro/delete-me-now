@@ -1,0 +1,129 @@
+/* Self-hosted fonts — no CDN, no network on load.
+   Inter for UI; JetBrains Mono for the few numeric / keyboard accents. */
+@import '@fontsource/inter/400.css';
+@import '@fontsource/inter/500.css';
+@import '@fontsource/inter/600.css';
+@import '@fontsource/inter/700.css';
+@import '@fontsource/jetbrains-mono/500.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ===========================================================================
+   THEME TOKENS — one source of truth for light + dark.
+   Tailwind palette resolves to var() expressions; switching themes swaps
+   these CSS variables, no per-class duplication. Light is default;
+   .theme-dark on <html> activates dark.
+   Values are space-separated RGB triplets (consumed via rgb(var(--x) / a)).
+   =========================================================================== */
+:root {
+  /* Surfaces — clean off-white app, white cards. */
+  --canvas:           246 247 249;  /* #F6F7F9 app background */
+  --canvas-elevated:  255 255 255;  /* #FFFFFF cards / panels */
+  --canvas-sunken:    240 241 244;  /* #F0F1F4 insets / hover */
+
+  /* Borders / dividers — quiet cool grey. */
+  --rule:             236 238 241;  /* #ECEEF1 */
+  --rule-soft:        244 245 247;  /* #F4F5F7 */
+  --rule-strong:      225 228 232;  /* #E1E4E8 */
+
+  /* Ink — text stops. */
+  --ink-primary:       21  23  26;  /* #15171A */
+  --ink-secondary:    100 106 115;  /* #646A73 */
+  --ink-tertiary:     154 160 168;  /* #9AA0A8 */
+  --ink-quiet:        181 186 193;  /* #B5BAC1 */
+
+  /* Accent — teal. The brand + primary action. */
+  --accent:            13 148 136;  /* #0D9488 */
+  --accent-hover:      15 118 110;  /* #0F766E */
+  --accent-soft:      226 246 242;  /* #E2F6F2 wash */
+  --accent-strong:     17  94  89;  /* #115E59 */
+
+  /* Critical — escalation / alarm. */
+  --critical:         220  38  38;  /* #DC2626 */
+  --critical-hover:   185  28  28;  /* #B91C1C */
+  --critical-quiet:   249 207 207;  /* #F9CFCF */
+  --critical-wash:    253 236 236;  /* #FDECEC */
+
+  /* Positive — sent / resolved. */
+  --positive:          22 163  74;  /* #16A34A */
+  --positive-quiet:   183 224 197;  /* #B7E0C5 */
+  --positive-wash:    233 246 238;  /* #E9F6EE */
+
+  /* Honey — drafted / pending warning (amber). */
+  --honey:            217 119   6;  /* #D97706 */
+  --honey-quiet:      253 242 227;  /* #FDF2E3 */
+}
+
+html.theme-dark {
+  --canvas:            10  11  13;  /* #0A0B0D */
+  --canvas-elevated:   21  23  27;  /* #15171B */
+  --canvas-sunken:     27  30  35;  /* #1B1E23 */
+
+  --rule:              30  33  39;  /* #1E2127 */
+  --rule-soft:         24  26  31;  /* #181A1F */
+  --rule-strong:       42  46  53;  /* #2A2E35 */
+
+  --ink-primary:      236 238 242;  /* #ECEEF2 */
+  --ink-secondary:    144 151 160;  /* #9097A0 */
+  --ink-tertiary:      95 101 110;  /* #5F656E */
+  --ink-quiet:         70  75  83;  /* #464B53 */
+
+  --accent:            20 184 166;  /* #14B8A6 */
+  --accent-hover:      45 212 191;  /* #2DD4BF */
+  --accent-soft:       16  49  45;  /* #10312D */
+  --accent-strong:     94 234 212;  /* #5EEAD4 */
+
+  --critical:         248 113 113;  /* #F87171 */
+  --critical-hover:   239  68  68;  /* #EF4444 */
+  --critical-quiet:    66  32  32;  /* #422020 */
+  --critical-wash:     42  20  20;  /* #2A1414 */
+
+  --positive:          52 211 153;  /* #34D399 */
+  --positive-quiet:    20  60  46;  /* #143C2E */
+  --positive-wash:     14  42  32;  /* #0E2A20 */
+
+  --honey:            251 191  36;  /* #FBBF24 */
+  --honey-quiet:       42  33  16;  /* #2A2110 */
+}
+
+html, body, #root { min-height: 100%; }
+
+body {
+  background-color: rgb(var(--canvas));
+  color: rgb(var(--ink-primary));
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  font-size: 15px;
+  line-height: 1.5;
+  letter-spacing: -0.01em;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+.font-display { font-family: 'Inter', system-ui, sans-serif; font-weight: 600; letter-spacing: -0.025em; }
+
+/* Quiet scrollbars. */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgb(var(--rule-strong)); border-radius: 99px; border: 3px solid rgb(var(--canvas)); }
+::-webkit-scrollbar-thumb:hover { background: rgb(var(--ink-quiet)); }
+
+/* Focus ring — teal accent. */
+*:focus-visible { outline: 2px solid rgb(var(--accent)); outline-offset: 2px; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+::selection { background: rgb(var(--accent) / 0.22); }
+
+details > summary::-webkit-details-marker { display: none; }
+details > summary { list-style: none; }
+details[open] > summary .rail-chevron { transform: rotate(90deg); }
+details[open] > summary .group-open\:rotate-90 { transform: rotate(90deg); }
