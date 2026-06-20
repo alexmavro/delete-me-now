@@ -1,6 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { Service, ServiceFilter, RequestStatus, ResponseStatus, SmartPackId, EU_REGIONS, Region, StagedEscalation, FacetContact, FacetRisk } from '../types';
-import { INITIAL_SERVICES } from '../data/services';
 import { SMART_PACKS } from '../data/jurisdictions';
 import { storage } from '../utils/storage';
 import { getBestEmail } from '../utils/contacts';
@@ -30,8 +29,8 @@ function isValidStagedEscalation(v: unknown): v is StagedEscalation {
   );
 }
 
-function mergeWithSaved(saved: Service[]): Service[] {
-  return INITIAL_SERVICES.map((init) => {
+function mergeWithSaved(saved: Service[], initialServices: Service[]): Service[] {
+  return initialServices.map((init) => {
     const match = saved.find((s) => s.id === init.id);
     if (!match) return init;
     // Merge ONLY user-state fields (ServiceState). Canonical fields (name,
@@ -58,7 +57,7 @@ function mergeWithSaved(saved: Service[]): Service[] {
     // branch above spreads `...init` first, so a stale persisted flag is
     // dropped if upstream re-adds the company.
     saved
-      .filter((s) => !INITIAL_SERVICES.find((i) => i.id === s.id))
+      .filter((s) => !initialServices.find((i) => i.id === s.id))
       .map((s) => (s.source === 'manual' ? s : { ...s, isOrphan: true })),
   );
 }
@@ -96,45 +95,61 @@ function matchesRiskFacet(s: Service, facet: FacetRisk): boolean {
     !s.categories.includes('Ad Tech');
 }
 
+const KNOWN_REGIONS: ReadonlySet<string> = new Set([
+  'Global', 'EU',
+  'DE', 'FR', 'IT', 'ES', 'NL', 'BE', 'AT', 'PL', 'SE', 'DK',
+  'FI', 'IE', 'PT', 'GR', 'CZ', 'RO', 'HU', 'HR', 'SK', 'SI',
+  'BG', 'LT', 'LV', 'EE', 'CY', 'LU', 'MT',
+  'US', 'UK', 'BR', 'CH', 'NO', 'IS', 'LI',
+]);
+
+// Unknown region codes return true — an invalid `region:zz` is ignored
+// rather than silently emptying the directory.
+function regionMatches(regions: readonly Region[], r: string): boolean {
+  if (!KNOWN_REGIONS.has(r)) return true;
+  if (r === 'EU') {
+    return regions.includes('EU') || regions.some((rg) => (EU_REGIONS as readonly Region[]).includes(rg));
+  }
+  return regions.includes(r as Region);
+}
+
+function isSpeculative(s: Service): boolean {
+  return s.categories.includes('Data Broker') || s.categories.includes('Ad Tech') || s.confidence === 'Inferred';
+}
+
 export function useServices() {
-  const [services, setServicesRaw] = useState<Service[]>(() => {
-    const saved = storage.get<Service[]>('services');
-    return saved ? mergeWithSaved(saved) : INITIAL_SERVICES;
-  });
+  const [services, setServicesRaw] = useState<Service[]>([]);
+  const [datasetVerifiedAt, setDatasetVerifiedAt] = useState<string | undefined>();
+  const [loaded, setLoaded] = useState(false);
+  const [initialServices, setInitialServices] = useState<Service[]>([]);
+
+  useEffect(() => {
+    import('../data/services').then(({ INITIAL_SERVICES }) => {
+      setInitialServices(INITIAL_SERVICES);
+      const saved = storage.get<Service[]>('services');
+      setServicesRaw(saved ? mergeWithSaved(saved, INITIAL_SERVICES) : INITIAL_SERVICES);
+      let best: string | undefined;
+      for (const s of INITIAL_SERVICES) {
+        if (s.lastVerified && (!best || s.lastVerified > best)) best = s.lastVerified;
+      }
+      setDatasetVerifiedAt(best);
+      setLoaded(true);
+    }).catch((err) => {
+      console.error('Failed to load services dataset', err);
+    });
+  }, []);
 
   const [filter, setFilterRaw] = useState<ServiceFilter>(DEFAULT_FILTER);
 
   useEffect(() => {
+    if (!loaded) return;
     storage.set('services', services);
-  }, [services]);
+  }, [services, loaded]);
 
   const setFilter = useCallback((updates: Partial<ServiceFilter>) => {
     setFilterRaw((prev) => ({ ...prev, ...updates }));
   }, []);
 
-  const isSpeculative = (s: Service) =>
-    s.categories.includes('Data Broker') || s.categories.includes('Ad Tech') || s.confidence === 'Inferred';
-
-  // Unknown region codes return true; an invalid `region:zz` should
-  // be ignored rather than silently empty the directory.
-  const KNOWN_REGIONS: ReadonlySet<string> = new Set([
-    'Global', 'EU',
-    'DE', 'FR', 'IT', 'ES', 'NL', 'BE', 'AT', 'PL', 'SE', 'DK',
-    'FI', 'IE', 'PT', 'GR', 'CZ', 'RO', 'HU', 'HR', 'SK', 'SI',
-    'BG', 'LT', 'LV', 'EE', 'CY', 'LU', 'MT',
-    'US', 'UK', 'BR', 'CH', 'NO', 'IS', 'LI',
-  ]);
-  function regionMatches(regions: readonly Region[], r: string): boolean {
-    if (!KNOWN_REGIONS.has(r)) return true;
-    if (r === 'EU') {
-      return regions.includes('EU') || regions.some((rg) => (EU_REGIONS as readonly Region[]).includes(rg));
-    }
-    return regions.includes(r as Region);
-  }
-
-  // Parse the search box once per filter change rather than per service.
-  // Recognizes tag:/region:/cat:/risk: prefixes; falls back to free-text
-  // name matching for everything else.
   const parsedQuery = useMemo(() => parseQuery(filter.search), [filter.search]);
 
   const matchesFilter = useCallback(
@@ -270,8 +285,9 @@ export function useServices() {
   }, []);
 
   const resetServices = useCallback(() => {
-    setServicesRaw(INITIAL_SERVICES);
-  }, []);
+    if (!loaded) return;
+    setServicesRaw(initialServices);
+  }, [loaded, initialServices]);
 
   const markSent = useCallback((id: string) => {
     setServicesRaw((prev) =>
@@ -483,5 +499,6 @@ export function useServices() {
     setNotes,
     captureResponse,
     stats,
+    datasetVerifiedAt,
   };
 }

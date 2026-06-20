@@ -6,7 +6,6 @@ import { useTheme } from './hooks/useTheme';
 import { useDispatch } from './hooks/useDispatch';
 import { getTranslations } from './locales';
 import { generateEmail, generateFollowUpEmail, generateDpaComplaint } from './templates';
-import { getBestEmail } from './utils/contacts';
 import { buildMailtoUrl } from './utils/email';
 import { getDpaForCountry } from './data/dpa';
 import { controllerLanguage } from './utils/controller-language';
@@ -109,19 +108,13 @@ export default function App() {
 
   const handleSend = useCallback((s: Service) => {
     if (!isValid) { setProfileOpen(true); return; }
-    const to = getBestEmail(s.contacts);
-    if (!to) { console.warn('handleSend: no contact email for', s.id); return; }
-    window.open(buildMailtoUrl(to, getServiceEmail(s)));
-    services.updateStatus(s.id, RequestStatus.SENT);
-  }, [isValid, getServiceEmail, services]);
+    dispatch.sendOne(s);
+  }, [isValid, dispatch]);
 
   const handleFollowUp = useCallback((s: Service) => {
     if (!isValid) { setProfileOpen(true); return; }
-    const to = getBestEmail(s.contacts);
-    if (!to) { console.warn('handleFollowUp: no contact email for', s.id); return; }
-    window.open(buildMailtoUrl(to, getFollowUpServiceEmail(s)));
-    services.markFollowUpSent(s.id);
-  }, [isValid, getFollowUpServiceEmail, services]);
+    dispatch.sendOneFollowUp(s);
+  }, [isValid, dispatch]);
 
   const handleEscalate = useCallback((s: Service) => {
     const dpa = s.headquarterCountry ? getDpaForCountry(s.headquarterCountry) : undefined;
@@ -162,10 +155,11 @@ export default function App() {
     if (target) setRespondingTo(target);
   }, [services.services]);
 
+  const { captureResponse } = services;
   const handleSaveResponse = useCallback((replyText: string, classification: ResponseStatus) => {
     if (!respondingTo) return;
-    services.captureResponse(respondingTo.id, replyText, classification);
-  }, [respondingTo, services]);
+    captureResponse(respondingTo.id, replyText, classification);
+  }, [respondingTo, captureResponse]);
 
   const handleJumpToService = useCallback((id: string) => {
     services.setFilter({ search: '' }); // else a live search filter can hide the jump target
@@ -210,7 +204,6 @@ export default function App() {
     setView('overview');
   }, [services]);
 
-  // --- per-row action button (manage mode) ---
   const rowAction = (s: Service) => {
     const cls = 'inline-flex items-center gap-1 text-[13px] rounded-[7px] px-3 py-1.5 border border-rule-strong text-ink-secondary hover:border-accent hover:text-accent transition-colors';
     switch (s.status) {
@@ -347,7 +340,7 @@ export default function App() {
           </div>
         </div>
 
-        <Footer t={t} />
+        <Footer t={t} datasetVerifiedAt={services.datasetVerifiedAt} />
       </main>
 
       <MobileDrawer

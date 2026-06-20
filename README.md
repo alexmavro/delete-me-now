@@ -2,6 +2,8 @@
 
 > *Privacy is a right. Treat it like one.*
 
+**[→ Use it now](https://dmn.alexmavro.com)**
+
 A zero-knowledge, browser-only tool for exercising your right to data deletion, in bulk.
 
 Manually writing deletion requests to thousands of data brokers is impossible. Paying a lawyer is

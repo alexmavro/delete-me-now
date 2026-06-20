@@ -1,23 +1,12 @@
 import { useNetworkActivity } from '../../hooks/useNetworkActivity';
 import { Translations } from '../../locales';
-import { INITIAL_SERVICES } from '../../data/services';
 
 interface Props {
   t: Translations;
+  datasetVerifiedAt?: string;
 }
 
-// Dataset freshness is computed once at module load — the bundled JSON
-// doesn't change at runtime, so re-running this per render would be waste.
-// Picks the max lastVerified across services, ignoring undefined.
-const datasetVerifiedAt = (() => {
-  let best: string | undefined;
-  for (const s of INITIAL_SERVICES) {
-    if (s.lastVerified && (!best || s.lastVerified > best)) best = s.lastVerified;
-  }
-  return best;
-})();
-
-export function Footer({ t }: Props) {
+export function Footer({ t, datasetVerifiedAt }: Props) {
   const { outbound } = useNetworkActivity();
 
   return (

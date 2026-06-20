@@ -36,28 +36,18 @@ export interface UseDispatchArgs {
   selected: Service[];
   profile: UserProfile;
   getEmail: (s: Service) => GeneratedEmail;
-  // Same shape as getEmail but produces the firmer follow-up letter (auto
-  // AGGRESSIVE for IGNORED). Caller owns generation so all template logic
-  // stays in App.tsx alongside the per-row handleFollowUp.
   getFollowUpEmail: (s: Service) => GeneratedEmail;
   markSent: (id: string) => void;
   markFollowUpSent: (id: string) => void;
-  // For locale-keyed user-readable error verbs. The raw Error.message is
-  // appended in console.warn but never shown to the user.
   t: Translations;
 }
 
-// Discriminator: a single attestation card serves both first sends and
-// follow-ups; the confirm path advances different lifecycle states.
 export type DispatchKind = 'send' | 'followUp';
 
 export interface PendingAttestation {
   serviceId: string;
   kind: DispatchKind;
   via: SendVia;
-  // True when window.open returned null (popup blocker / iframe / sandboxed).
-  // Lets the UI render an explicit "your browser blocked it; allow popups
-  // and click No, retry" hint instead of the bare "did it open?" question.
   popupBlocked: boolean;
 }
 
@@ -69,6 +59,8 @@ export interface UseDispatchResult {
   pendingAttestation: PendingAttestation | null;
   sendNext: () => void;
   sendNextFollowUp: () => void;
+  sendOne: (s: Service) => void;
+  sendOneFollowUp: (s: Service) => void;
   confirmSend: () => void;
   rejectSend: () => void;
   isZipping: boolean;
@@ -76,8 +68,6 @@ export interface UseDispatchResult {
   downloadAll: () => Promise<void>;
   downloadSingle: (s: Service, to: string) => void;
   clearFailed: () => void;
-  // User-facing error string for storage-quota / sandboxed-iframe / Blob
-  // URL throws; the rail surfaces this so a failed click isn't silent.
   lastError: string | null;
   clearError: () => void;
 }
@@ -155,19 +145,16 @@ export function useDispatch({
       setPendingAttestation(null);
       return;
     }
-    const expected =
+    const validForKind =
       pendingAttestation.kind === 'send'
-        ? RequestStatus.PENDING
-        : RequestStatus.IGNORED;
-    if (target.status !== expected) {
+        ? target.status === RequestStatus.PENDING || target.status === RequestStatus.SKIPPED
+        : target.status === RequestStatus.SENT || target.status === RequestStatus.WAITING
+          || target.status === RequestStatus.FOLLOW_UP_SENT || target.status === RequestStatus.IGNORED;
+    if (!validForKind) {
       setPendingAttestation(null);
     }
   }, [pendingAttestation, selected]);
 
-  // Shared open/save body for sendNext + sendNextFollowUp. Wrapped in
-  // useCallback so the lint rule guards both call sites' deps; if a future
-  // edit drops `sendVia` from a caller's deps, this won't silently use stale
-  // values because dispatchOne itself memoizes on those same deps.
   const dispatchOne = useCallback(
     (next: Service, email: GeneratedEmail, kind: DispatchKind) => {
       const to = getBestEmail(next.contacts);
@@ -180,7 +167,7 @@ export function useDispatch({
           downloadEml(`${prefix}_${safe}.eml`, content);
           setPendingAttestation({ serviceId: next.id, kind, via: 'eml', popupBlocked: false });
         } catch (err) {
-          reportError(sendVia === 'eml' ? 'downloadSingle' : 'sendNext', err);
+          reportError('downloadSingle', err);
         }
         return;
       }
@@ -211,10 +198,7 @@ export function useDispatch({
     if (pendingAttestation) return;
     const next = pendingQueue[0];
     if (!next) return;
-    if (!getBestEmail(next.contacts)) return;
     const email = getEmail(next);
-    // Each fresh send-next attempt clears the stale batch banner; leaving
-    // a "2 of 7 failed" line above an unrelated single send is misleading.
     if (lastBatch) setLastBatch(null);
     if (lastError) setLastError(null);
     dispatchOne(next, email, 'send');
@@ -229,6 +213,25 @@ export function useDispatch({
     if (lastError) setLastError(null);
     dispatchOne(next, email, 'followUp');
   }, [pendingAttestation, ignoredQueue, getFollowUpEmail, lastBatch, lastError, dispatchOne]);
+
+  const sendOne = useCallback((s: Service) => {
+    if (pendingAttestation) return;
+    if (s.status !== RequestStatus.PENDING && s.status !== RequestStatus.SKIPPED) return;
+    if (!getBestEmail(s.contacts)) return;
+    const email = getEmail(s);
+    if (lastBatch) setLastBatch(null);
+    if (lastError) setLastError(null);
+    dispatchOne(s, email, 'send');
+  }, [pendingAttestation, getEmail, lastBatch, lastError, dispatchOne]);
+
+  const sendOneFollowUp = useCallback((s: Service) => {
+    if (pendingAttestation) return;
+    if (!s.lastContacted) return;
+    const email = getFollowUpEmail(s);
+    if (lastBatch) setLastBatch(null);
+    if (lastError) setLastError(null);
+    dispatchOne(s, email, 'followUp');
+  }, [pendingAttestation, getFollowUpEmail, lastBatch, lastError, dispatchOne]);
 
   const confirmSend = useCallback(() => {
     if (!pendingAttestation) return;
@@ -305,6 +308,8 @@ export function useDispatch({
     pendingAttestation,
     sendNext,
     sendNextFollowUp,
+    sendOne,
+    sendOneFollowUp,
     confirmSend,
     rejectSend,
     isZipping,
