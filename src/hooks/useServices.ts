@@ -225,6 +225,10 @@ export function useServices() {
     );
   }, []);
 
+  const selectByPredicate = useCallback((match: (s: Service) => boolean): void => {
+    setServicesRaw((prev) => prev.map((s) => (!s.selected && match(s) ? { ...s, selected: true } : s)));
+  }, []);
+
   const selectAll = useCallback(() => {
     setServicesRaw((prev) => prev.map((s) => ({ ...s, selected: true })));
   }, []);
@@ -479,6 +483,7 @@ export function useServices() {
     selected,
     toggle,
     selectPack,
+    selectByPredicate,
     selectAll,
     selectMany,
     deselectAll,

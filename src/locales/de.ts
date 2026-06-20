@@ -55,6 +55,14 @@ export const de: Translations = {
   dataStorageBody2:
     'Eine Datei auf deinem Rechner, sonst nichts. Browserdaten löschen, anderes Gerät, Inkognito-Modus, schon ist die Datei mit weg. Der Reset-Button macht dasselbe absichtlich.',
 
+  fieldWhereAreYou: 'Wo bist du?',
+  fieldWhereAreYouNote: 'Setzt Datenschutzgesetz, Briefsprache und EU-Status automatisch.',
+  fieldCountryPlaceholder: 'Land wählen',
+  countryDerived: (jurisdiction: string, language: string, isEu: boolean) =>
+    `→ ${jurisdiction} · ${language}${isEu ? ' · EU-Bürger:in' : ''}`,
+  fieldAdvanced: 'Überschreiben',
+  fieldAdvancedNote: 'Die automatisch erkannten Einstellungen oben ändern.',
+
   fieldCountry: 'Land',
   fieldCountryNote: 'Damit wir dir relevante Dienste vorschlagen können.',
 
@@ -140,6 +148,7 @@ export const de: Translations = {
 
   sidebarAddTargets: 'Ziele hinzufügen',
   sidebarProgress: 'Fortschritt',
+  sidebarStartHere: 'Hier starten',
   sidebarQuickLists: 'Schnellauswahl',
   sidebarSetProfile: 'Profil anlegen',
 

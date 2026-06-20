@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { UserProfile, Language, Jurisdiction, TemplateStyle, RequestIntent, Gender } from '../types';
 import { storage } from '../utils/storage';
 import { sanitizeHeader } from '../utils/email';
+import { countryToJurisdiction, countryToLanguage, isEuCountry, isSupportedCountry } from '../utils/user-country';
 
 function parseLocale(): { lang: string; region: string } {
   const tag = (navigator.language || 'en').toLowerCase();
@@ -107,7 +108,7 @@ function parseProfile(raw: unknown): UserProfile {
     templateStyle,
     language,
     jurisdiction,
-    country: typeof r.country === 'string' ? r.country : undefined,
+    country: isSupportedCountry(r.country) ? r.country : undefined,
     alwaysWriteInMyLanguage: r.alwaysWriteInMyLanguage === true,
     intent,
     gender,
@@ -128,6 +129,20 @@ export function useProfile() {
     setProfileRaw((prev) => ({ ...prev, ...sanitizeHeaderBound(updates) }));
   }, []);
 
+  const setCountry = useCallback((code: string) => {
+    if (!isSupportedCountry(code)) {
+      console.warn(`[profile] setCountry: unsupported code "${code}"`);
+      return;
+    }
+    setProfileRaw((prev) => ({
+      ...prev,
+      country: code,
+      jurisdiction: countryToJurisdiction(code),
+      language: countryToLanguage(code),
+      isEuCitizen: isEuCountry(code),
+    }));
+  }, []);
+
   const resetProfile = useCallback(() => {
     setProfileRaw(makeDefaultProfile());
   }, []);
@@ -137,5 +152,5 @@ export function useProfile() {
   const isValid =
     profile.fullName.trim() !== '' && EMAIL_RE.test(profile.email.trim());
 
-  return { profile, setProfile, resetProfile, isValid };
+  return { profile, setProfile, setCountry, resetProfile, isValid };
 }

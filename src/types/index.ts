@@ -225,7 +225,10 @@ export type SmartPackId =
   | 'social-media'
   | 'telecom'
   | 'analytics'
-  | 'health-insurance';
+  | 'health-insurance'
+  | 'finance-exposure'
+  | 'online-footprint'
+  | 'full-cleanup';
 
 export interface SmartPack {
   id: SmartPackId;

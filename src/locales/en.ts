@@ -53,6 +53,14 @@ export const en = {
   dataStorageBody2:
     "A file on your machine, nothing else. Clear your browser data, switch device, or use private mode, and the file's gone with it. The Reset button does the same on purpose.",
 
+  fieldWhereAreYou: 'Where are you?',
+  fieldWhereAreYouNote: 'Sets your privacy law, letter language, and EU status automatically.',
+  fieldCountryPlaceholder: 'Select your country',
+  countryDerived: (jurisdiction: string, language: string, isEu: boolean) =>
+    `→ ${jurisdiction} · ${language} letters${isEu ? ' · EU resident' : ''}`,
+  fieldAdvanced: 'Override',
+  fieldAdvancedNote: 'Change the auto-detected settings above.',
+
   fieldCountry: 'Country',
   fieldCountryNote: 'Helps us recommend services relevant to you.',
 
@@ -138,6 +146,7 @@ export const en = {
 
   sidebarAddTargets: 'Add targets',
   sidebarProgress: 'Progress',
+  sidebarStartHere: 'Start here',
   sidebarQuickLists: 'Quick lists',
   sidebarSetProfile: 'Set your profile',
 

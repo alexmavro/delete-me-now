@@ -50,7 +50,7 @@ export function WelcomeModal({ isOpen, onClose }: Props) {
 
   return (
     <div
-      className="fixed inset-0 z-[80] grid place-items-center bg-[rgba(8,10,14,0.55)] backdrop-blur-sm animate-fade-in"
+      className="fixed inset-0 z-[80] grid place-items-center bg-canvas-sunken/80 backdrop-blur-[3px] animate-fade-in"
       onClick={onClose}
       role="dialog"
       aria-modal="true"

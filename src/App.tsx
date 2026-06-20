@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { RequestStatus, Service, ResponseStatus, GeneratedEmail } from './types';
+import { RequestStatus, Service, ResponseStatus, GeneratedEmail, SmartPackId } from './types';
 import { useProfile } from './hooks/useProfile';
 import { useServices } from './hooks/useServices';
 import { useTheme } from './hooks/useTheme';
@@ -10,7 +10,8 @@ import { buildMailtoUrl } from './utils/email';
 import { getDpaForCountry } from './data/dpa';
 import { controllerLanguage } from './utils/controller-language';
 import { dpaLanguage } from './utils/dpa-language';
-import { SMART_PACKS } from './data/jurisdictions';
+import { SMART_PACKS, INTENT_PACKS } from './data/jurisdictions';
+import { LANG_TO_BCP47 } from './utils/user-country';
 
 import { Sidebar, View } from './components/workspace/Sidebar';
 import { Overview, OverviewStats } from './components/workspace/Overview';
@@ -27,8 +28,6 @@ import { AttestationBar } from './components/workspace/AttestationBar';
 import { Icon } from './components/ui/Icon';
 import { storage } from './utils/storage';
 
-const LANG_TO_BCP47: Record<string, string> = { EN: 'en', DE: 'de', FR: 'fr', ES: 'es', IT: 'it' };
-
 const VIEW_TITLE_KEY: Record<View, keyof import('./locales/en').Translations> = {
   overview: 'viewOverview',
   all: 'viewAll',
@@ -40,8 +39,11 @@ const VIEW_TITLE_KEY: Record<View, keyof import('./locales/en').Translations> = 
 const SENT_SET = [RequestStatus.SENT, RequestStatus.FOLLOW_UP_SENT];
 const ATTENTION_SET = [RequestStatus.IGNORED, RequestStatus.ESCALATION_READY, RequestStatus.ESCALATED];
 
+const INTENT_PACK_LINKS = INTENT_PACKS.map((p) => ({ id: p.id, label: p.label }));
+const PACK_LINKS = SMART_PACKS.slice(0, 4).map((p) => ({ id: p.id, label: p.label }));
+
 export default function App() {
-  const { profile, setProfile, isValid } = useProfile();
+  const { profile, setProfile, setCountry, isValid } = useProfile();
   const services = useServices();
   const { advanceLifecycle, setStagedEscalation } = services;
   const { theme, toggle: toggleTheme } = useTheme();
@@ -197,10 +199,9 @@ export default function App() {
     return rows.filter(matchName);
   }, [services.selected, view, q]);
 
-  const packLinks = useMemo(() => SMART_PACKS.slice(0, 4).map((p) => ({ id: p.id, label: p.label })), []);
-
-  const handleSelectPack = useCallback((id: typeof SMART_PACKS[number]['id']) => {
-    services.selectPack(id);
+  const handleSelectPack = useCallback((id: SmartPackId) => {
+    const pack = [...INTENT_PACKS, ...SMART_PACKS].find((p) => p.id === id);
+    if (pack) services.selectByPredicate(pack.match);
     setView('overview');
   }, [services]);
 
@@ -242,7 +243,7 @@ export default function App() {
     <div className="h-screen grid grid-cols-1 lg:grid-cols-[252px_1fr] bg-canvas text-ink-primary overflow-hidden">
       <Sidebar
         view={view} onSetView={setView} counts={counts}
-        packs={packLinks} onSelectPack={handleSelectPack}
+        intentPacks={INTENT_PACK_LINKS} packs={PACK_LINKS} onSelectPack={handleSelectPack}
         profile={profile} onOpenProfile={() => setProfileOpen(true)}
         t={t}
       />
@@ -346,12 +347,12 @@ export default function App() {
       <MobileDrawer
         isOpen={drawerOpen} onClose={() => setDrawerOpen(false)}
         view={view} onSetView={setView} counts={counts}
-        packs={packLinks} onSelectPack={handleSelectPack}
+        intentPacks={INTENT_PACK_LINKS} packs={PACK_LINKS} onSelectPack={handleSelectPack}
         profile={profile} onOpenProfile={() => setProfileOpen(true)}
         t={t}
       />
       <WelcomeModal isOpen={welcomeOpen} onClose={closeWelcome} />
-      <ProfilePanel isOpen={profileOpen} onClose={() => setProfileOpen(false)} profile={profile} setProfile={setProfile} t={t} />
+      <ProfilePanel isOpen={profileOpen} onClose={() => setProfileOpen(false)} profile={profile} setProfile={setProfile} setCountry={setCountry} t={t} />
       <LetterPreview service={preview} profile={profile} onClose={() => setPreview(null)} onSend={handleSend} t={t} />
       <ResponseCaptureModal isOpen={!!respondingTo} service={respondingTo} onClose={() => setRespondingTo(null)} onSubmit={handleSaveResponse} t={t} />
       <EscalateBanner

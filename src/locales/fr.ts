@@ -55,6 +55,14 @@ export const fr: Translations = {
   dataStorageBody2:
     "Un fichier sur votre machine, rien d'autre. Videz les données du navigateur, changez d'appareil ou passez en navigation privée, le fichier part avec. Le bouton Réinitialiser fait pareil, exprès.",
 
+  fieldWhereAreYou: 'Où êtes-vous ?',
+  fieldWhereAreYouNote: 'Définit automatiquement votre loi vie privée, la langue des lettres et votre statut UE.',
+  fieldCountryPlaceholder: 'Sélectionnez votre pays',
+  countryDerived: (jurisdiction: string, language: string, isEu: boolean) =>
+    `→ ${jurisdiction} · lettres en ${language}${isEu ? ' · résident·e UE' : ''}`,
+  fieldAdvanced: 'Modifier',
+  fieldAdvancedNote: 'Changer les réglages détectés automatiquement ci-dessus.',
+
   fieldCountry: 'Pays',
   fieldCountryNote: 'Nous aide à recommander des services pertinents.',
 
@@ -140,6 +148,7 @@ export const fr: Translations = {
 
   sidebarAddTargets: 'Ajouter des cibles',
   sidebarProgress: 'Avancement',
+  sidebarStartHere: 'Commencer ici',
   sidebarQuickLists: 'Sélection rapide',
   sidebarSetProfile: 'Configurer le profil',
 

@@ -55,6 +55,14 @@ export const it: Translations = {
   dataStorageBody2:
     'Un file sul tuo computer, niente di più. Svuoti i dati del browser, cambi dispositivo o vai in incognito, il file se ne va con loro. Il pulsante Reset fa lo stesso, apposta.',
 
+  fieldWhereAreYou: 'Dove sei?',
+  fieldWhereAreYouNote: 'Imposta automaticamente la legge sulla privacy, la lingua delle lettere e lo stato UE.',
+  fieldCountryPlaceholder: 'Seleziona il tuo paese',
+  countryDerived: (jurisdiction: string, language: string, isEu: boolean) =>
+    `→ ${jurisdiction} · lettere in ${language}${isEu ? ' · residente UE' : ''}`,
+  fieldAdvanced: 'Modifica',
+  fieldAdvancedNote: 'Cambia le impostazioni rilevate automaticamente sopra.',
+
   fieldCountry: 'Paese',
   fieldCountryNote: 'Ci aiuta a consigliarti servizi pertinenti.',
 
@@ -140,6 +148,7 @@ export const it: Translations = {
 
   sidebarAddTargets: 'Aggiungi destinatari',
   sidebarProgress: 'Stato',
+  sidebarStartHere: 'Inizia qui',
   sidebarQuickLists: 'Selezione rapida',
   sidebarSetProfile: 'Configura profilo',
 

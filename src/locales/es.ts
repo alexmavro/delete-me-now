@@ -55,6 +55,14 @@ export const es: Translations = {
   dataStorageBody2:
     'Un archivo en tu equipo, nada más. Borras los datos del navegador, cambias de dispositivo o usas modo incógnito y el archivo se va con ello. El botón Restablecer hace lo mismo, a propósito.',
 
+  fieldWhereAreYou: '¿Dónde estás?',
+  fieldWhereAreYouNote: 'Establece automáticamente tu ley de privacidad, idioma de las cartas y tu estado UE.',
+  fieldCountryPlaceholder: 'Selecciona tu país',
+  countryDerived: (jurisdiction: string, language: string, isEu: boolean) =>
+    `→ ${jurisdiction} · cartas en ${language}${isEu ? ' · residente UE' : ''}`,
+  fieldAdvanced: 'Modificar',
+  fieldAdvancedNote: 'Cambiar los ajustes detectados automáticamente arriba.',
+
   fieldCountry: 'País',
   fieldCountryNote: 'Nos ayuda a recomendar servicios relevantes para ti.',
 
@@ -140,6 +148,7 @@ export const es: Translations = {
 
   sidebarAddTargets: 'Añadir objetivos',
   sidebarProgress: 'Progreso',
+  sidebarStartHere: 'Empieza aquí',
   sidebarQuickLists: 'Selección rápida',
   sidebarSetProfile: 'Configurar perfil',
 

@@ -1,12 +1,13 @@
 import { UserProfile, SmartPackId } from '../../types';
 import { Translations } from '../../locales';
 import { JURISDICTION_LABELS } from '../../data/jurisdictions';
+import { getCountryName } from '../../utils/user-country';
 import { Logo } from '../ui/Logo';
 import { Icon, IconName } from '../ui/Icon';
 
 export type View = 'overview' | 'all' | 'sent' | 'awaiting' | 'attention';
 
-interface NavCounts {
+export interface NavCounts {
   total: number;
   selected: number;
   sent: number;
@@ -14,7 +15,7 @@ interface NavCounts {
   attention: number;
 }
 
-interface PackLink {
+export interface PackLink {
   id: SmartPackId;
   label: string;
 }
@@ -23,6 +24,7 @@ interface Props {
   view: View;
   onSetView: (v: View) => void;
   counts: NavCounts;
+  intentPacks: PackLink[];
   packs: PackLink[];
   onSelectPack: (id: SmartPackId) => void;
   profile: UserProfile;
@@ -55,7 +57,7 @@ function NavItem({
   );
 }
 
-export function Sidebar({ view, onSetView, counts, packs, onSelectPack, profile, onOpenProfile, t }: Props) {
+export function Sidebar({ view, onSetView, counts, intentPacks, packs, onSelectPack, profile, onOpenProfile, t }: Props) {
   return (
     <aside className="hidden lg:flex flex-col bg-canvas-elevated border-r border-rule px-3 py-3.5">
       <div className="flex items-center gap-2.5 px-2.5 pt-1 pb-1.5">
@@ -83,6 +85,15 @@ export function Sidebar({ view, onSetView, counts, packs, onSelectPack, profile,
         <NavItem icon="alert" label={t.viewAttention} count={counts.attention} active={view === 'attention'} onClick={() => onSetView('attention')} />
       </div>
 
+      {intentPacks.length > 0 && (
+        <div className="mt-3">
+          <div className="px-2.5 pt-2 pb-1 text-[11px] font-semibold uppercase tracking-[0.04em] text-ink-tertiary">{t.sidebarStartHere}</div>
+          {intentPacks.map((p) => (
+            <NavItem key={p.id} label={p.label} onClick={() => onSelectPack(p.id)} />
+          ))}
+        </div>
+      )}
+
       {packs.length > 0 && (
         <div className="mt-3">
           <div className="px-2.5 pt-2 pb-1 text-[11px] font-semibold uppercase tracking-[0.04em] text-ink-tertiary">{t.sidebarQuickLists}</div>
@@ -104,7 +115,7 @@ export function Sidebar({ view, onSetView, counts, packs, onSelectPack, profile,
         </span>
         <span className="min-w-0">
           <span className="block text-[13px] font-medium truncate">{profile.fullName.trim() || t.sidebarSetProfile}</span>
-          <span className="block text-[11.5px] text-ink-tertiary truncate">{JURISDICTION_LABELS[profile.jurisdiction]}</span>
+          <span className="block text-[11.5px] text-ink-tertiary truncate">{profile.country ? getCountryName(profile.country, profile.language) : JURISDICTION_LABELS[profile.jurisdiction]}</span>
         </span>
         <Icon name="settings" size={15} className="ml-auto text-ink-tertiary shrink-0" />
       </button>

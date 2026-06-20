@@ -93,6 +93,35 @@ export const SMART_PACKS: SmartPack[] = [
   },
 ];
 
+export const INTENT_PACKS: SmartPack[] = [
+  {
+    id: 'finance-exposure',
+    label: 'Finance & Brokers',
+    description: 'Financial data holders + data brokers',
+    longDescription:
+      'Banks, insurers, credit agencies, and data brokers that hold your financial information or sell it to third parties. These companies have your transaction history, credit scores, and risk profiles.',
+    match: (s: Service) =>
+      s.categories.some((c) => c === 'Finance' || c === 'Insurance' || c === 'Data Broker'),
+  },
+  {
+    id: 'online-footprint',
+    label: 'Online Footprint',
+    description: 'Social platforms + trackers',
+    longDescription:
+      'Social media platforms, analytics services, and ad-tech companies that track your online activity. These companies build profiles from your posts, browsing behavior, and app usage.',
+    match: (s: Service) =>
+      s.categories.some((c) => c === 'Social' || c === 'Analytics' || c === 'Ad Tech'),
+  },
+  {
+    id: 'full-cleanup',
+    label: 'Full Cleanup',
+    description: 'Every service in the directory',
+    longDescription:
+      'Selects every service in the directory — the widest net. Use this when you want to send deletion requests to everyone who might have your data.',
+    match: (s: Service) => !s.categories.includes('Imported'),
+  },
+];
+
 export const JURISDICTION_LABELS: Record<string, string> = {
   GDPR: 'GDPR (European Union)',
   CCPA: 'CCPA (California / USA)',

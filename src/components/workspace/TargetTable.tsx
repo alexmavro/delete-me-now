@@ -1,6 +1,7 @@
 import { ReactNode } from 'react';
-import { Service } from '../../types';
+import { Service, ServiceCategory } from '../../types';
 import { statusMeta, TONE_DOT } from '../../utils/status-display';
+import { CATEGORY_TOOLTIPS } from '../../utils/category-tooltips';
 
 interface Props {
   rows: Service[];
@@ -11,6 +12,21 @@ interface Props {
   renderAction?: (s: Service) => ReactNode;
   cap?: number;
   empty: ReactNode;
+}
+
+function CategoryChip({ category }: { category?: ServiceCategory }) {
+  if (!category) return <span>—</span>;
+  const tip = CATEGORY_TOOLTIPS[category];
+  return (
+    <span className="relative group/tip cursor-default" title={tip}>
+      <span>{category}</span>
+      {tip && (
+        <span className="invisible group-hover/tip:visible absolute left-0 bottom-full mb-1.5 z-20 w-[260px] px-3 py-2 text-[12.5px] leading-relaxed text-ink-primary bg-canvas-elevated border border-rule-strong rounded-[9px] shadow-card pointer-events-none">
+          {tip}
+        </span>
+      )}
+    </span>
+  );
 }
 
 function Checkbox({ on }: { on: boolean }) {
@@ -72,7 +88,9 @@ export function TargetTable({ rows, mode, onToggle, onPreview, renderAction, cap
                     </span>
                   </button>
                 </td>
-                <td className="px-4 py-3 text-[13px] text-ink-secondary hidden md:table-cell capitalize">{s.categories[0] ?? '—'}</td>
+                <td className="px-4 py-3 text-[13px] text-ink-secondary hidden md:table-cell">
+                  <CategoryChip category={s.categories[0]} />
+                </td>
                 {mode === 'manage' && meta && (
                   <td className="px-4 py-3">
                     <span className="inline-flex items-center gap-2 text-[12.5px] text-ink-secondary">

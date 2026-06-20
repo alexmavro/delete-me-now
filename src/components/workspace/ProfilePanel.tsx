@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { UserProfile, Language, Jurisdiction, TemplateStyle, RequestIntent, Gender } from '../../types';
 import { Translations } from '../../locales';
 import { Modal } from '../ui/Modal';
 import { isSarSupported } from '../../templates';
 import { JURISDICTION_LABELS } from '../../data/jurisdictions';
+import { getSortedCountries } from '../../utils/user-country';
 
 const INPUT_CLS =
   'w-full bg-canvas border border-rule-strong px-4 py-3 text-[18px] leading-normal text-ink-primary font-sans focus:border-accent focus:bg-canvas-elevated outline-none transition-colors aria-[invalid=true]:border-critical';
@@ -19,6 +20,7 @@ interface Props {
   onClose: () => void;
   profile: UserProfile;
   setProfile: (updates: Partial<UserProfile>) => void;
+  setCountry: (code: string) => void;
   t: Translations;
 }
 
@@ -37,12 +39,14 @@ const TEMPLATE_STYLES: { value: TemplateStyle; labelKey: keyof Translations }[] 
 ];
 
 const JURISDICTIONS = Object.entries(JURISDICTION_LABELS) as [Jurisdiction, string][];
+const LANGUAGE_LABEL: Record<Language, string> = Object.fromEntries(LANGUAGES.map((l) => [l.value, l.label])) as Record<Language, string>;
 
 const SECTION_LABEL_CLS =
   'font-mono text-[14px] uppercase tracking-[0.14em] text-ink-secondary mb-4';
 
-export function ProfilePanel({ isOpen, onClose, profile, setProfile, t }: Props) {
+export function ProfilePanel({ isOpen, onClose, profile, setProfile, setCountry, t }: Props) {
   const sarAvailable = isSarSupported(profile.jurisdiction);
+  const countries = useMemo(() => getSortedCountries(profile.language), [profile.language]);
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={t.profileTitle} maxWidth="max-w-[720px]" closeLabel={t.previewClose}>
@@ -50,6 +54,34 @@ export function ProfilePanel({ isOpen, onClose, profile, setProfile, t }: Props)
         <p className="text-[17px] text-ink-secondary leading-relaxed font-sans max-w-[58ch]">
           {t.profileSubtitle}
         </p>
+
+        {/* Country — primary selector, cascades jurisdiction + language + EU status */}
+        <div className="space-y-3">
+          <Field label={t.fieldWhereAreYou} note={!profile.country ? t.fieldWhereAreYouNote : undefined}>
+            <select
+              value={profile.country ?? ''}
+              onChange={(e) => {
+                if (e.target.value) setCountry(e.target.value);
+                else setProfile({ country: undefined });
+              }}
+              className={INPUT_CLS}
+            >
+              <option value="">{t.fieldCountryPlaceholder}</option>
+              {countries.map(({ code, name }) => (
+                <option key={code} value={code}>{name}</option>
+              ))}
+            </select>
+          </Field>
+          {profile.country && (
+            <p className="text-[15px] text-accent font-sans">
+              {t.countryDerived(
+                JURISDICTION_LABELS[profile.jurisdiction] ?? profile.jurisdiction,
+                LANGUAGE_LABEL[profile.language] ?? profile.language,
+                profile.isEuCitizen,
+              )}
+            </p>
+          )}
+        </div>
 
         {/* Identity */}
         <div className="space-y-7">
@@ -104,44 +136,8 @@ export function ProfilePanel({ isOpen, onClose, profile, setProfile, t }: Props)
           </div>
         </div>
 
-        {/* Jurisdiction + language */}
+        {/* Gender */}
         <div className="space-y-7 pt-7 border-t border-rule">
-          <div className="grid grid-cols-2 gap-6">
-            <Field label={t.fieldJurisdiction}>
-              <select
-                value={profile.jurisdiction}
-                onChange={(e) => setProfile({ jurisdiction: e.target.value as Jurisdiction })}
-                className={INPUT_CLS}
-              >
-                {JURISDICTIONS.map(([value, label]) => (
-                  <option key={value} value={value}>{label}</option>
-                ))}
-              </select>
-            </Field>
-
-            <Field label={t.fieldLanguage}>
-              <select
-                value={profile.language}
-                onChange={(e) => setProfile({ language: e.target.value as Language })}
-                className={INPUT_CLS}
-              >
-                {LANGUAGES.map(({ value, label }) => (
-                  <option key={value} value={value}>{label}</option>
-                ))}
-              </select>
-            </Field>
-          </div>
-
-          <CheckboxRow
-            checked={!!profile.alwaysWriteInMyLanguage}
-            onChange={(v) => setProfile({ alwaysWriteInMyLanguage: v })}
-            label={t.alwaysMyLanguageLabel}
-            note={t.alwaysMyLanguageNote}
-          />
-
-          {/* Gender. Drives self-references in DE/FR/ES letters
-              ("Bürger/Bürgerin/Bürger:in", "résident/résidente/résident·e",
-              "cómodo/cómoda/cómodo·a"). Invariant for EN + IT. */}
           <div>
             <p className={SECTION_LABEL_CLS}>{t.genderLabel}</p>
             <p className="text-[15px] text-ink-secondary mt-[-0.5rem] mb-4 font-sans leading-relaxed">
@@ -170,7 +166,57 @@ export function ProfilePanel({ isOpen, onClose, profile, setProfile, t }: Props)
               })}
             </div>
           </div>
+
+          <CheckboxRow
+            checked={!!profile.alwaysWriteInMyLanguage}
+            onChange={(v) => setProfile({ alwaysWriteInMyLanguage: v })}
+            label={t.alwaysMyLanguageLabel}
+            note={t.alwaysMyLanguageNote}
+          />
         </div>
+
+        {/* Advanced — jurisdiction / language / EU-citizen overrides */}
+        <details className="group details-card border border-rule-strong bg-canvas-elevated max-w-full">
+          <summary className="font-mono text-[13px] uppercase tracking-[0.14em] text-ink-secondary px-5 py-3 cursor-pointer flex items-center gap-2 list-none hover:text-ink-primary transition-colors motion-reduce:transition-none">
+            <span aria-hidden="true" className="text-accent transition-transform motion-reduce:transition-none group-open:rotate-90 inline-block w-3">›</span>
+            {t.fieldAdvanced}
+          </summary>
+          <div className="px-5 pt-1 pb-5 space-y-6">
+            <p className="text-[14px] text-ink-tertiary font-sans">{t.fieldAdvancedNote}</p>
+            <div className="grid grid-cols-2 gap-6">
+              <Field label={t.fieldJurisdiction}>
+                <select
+                  value={profile.jurisdiction}
+                  onChange={(e) => setProfile({ jurisdiction: e.target.value as Jurisdiction })}
+                  className={INPUT_CLS}
+                >
+                  {JURISDICTIONS.map(([value, label]) => (
+                    <option key={value} value={value}>{label}</option>
+                  ))}
+                </select>
+              </Field>
+
+              <Field label={t.fieldLanguage}>
+                <select
+                  value={profile.language}
+                  onChange={(e) => setProfile({ language: e.target.value as Language })}
+                  className={INPUT_CLS}
+                >
+                  {LANGUAGES.map(({ value, label }) => (
+                    <option key={value} value={value}>{label}</option>
+                  ))}
+                </select>
+              </Field>
+            </div>
+
+            <CheckboxRow
+              checked={profile.isEuCitizen}
+              onChange={(v) => setProfile({ isEuCitizen: v })}
+              label={t.euCitizenLabel}
+              note={t.euCitizenNote}
+            />
+          </div>
+        </details>
 
         {/* Intent */}
         <div className="pt-7 border-t border-rule">
@@ -235,15 +281,6 @@ export function ProfilePanel({ isOpen, onClose, profile, setProfile, t }: Props)
             </div>
           </div>
         )}
-
-        <div className="pt-7 border-t border-rule">
-          <CheckboxRow
-            checked={profile.isEuCitizen}
-            onChange={(v) => setProfile({ isEuCitizen: v })}
-            label={t.euCitizenLabel}
-            note={t.euCitizenNote}
-          />
-        </div>
 
         {/* Where the info entered here is stored. Lives at the bottom as a
             calm reassurance, collapsed by default. <details> stays keyboard +
