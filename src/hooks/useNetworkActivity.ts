@@ -1,16 +1,9 @@
 import { useEffect, useState } from 'react';
 
-// Live tally of network requests made by the app since page load.
-// Wraps `fetch`, `XMLHttpRequest`, and `navigator.sendBeacon` once at module
-// load. Multiple Footer mounts (StrictMode dev double-invoke, future-proofing)
-// share the same wrappers and counter — re-patching captures the patched
-// version as "original" and creates an infinite double-count chain.
-//
-// In practice the counter should stay at 0 for the entire session, because we
-// self-host fonts, icons, and the dataset; the tool makes ZERO runtime
-// requests once the initial bundle is loaded. The whole point of surfacing
-// this is that a privacy-skeptical user can verify it — both here in the
-// footer and in their own DevTools Network tab.
+// Live tally of outbound network requests since page load. Patches fetch,
+// XHR, and sendBeacon once at module load. Module-level state means multiple
+// Footer mounts share the same counter; re-patching would capture the
+// already-patched version as "original" and double-count every request.
 
 interface NetworkCounts {
   outbound: number;
@@ -26,7 +19,6 @@ const bump = () => {
   for (const s of subscribers) s(outbound);
 };
 
-// Patch globals once at module load. Idempotent — won't re-wrap on HMR.
 let patched = false;
 function ensurePatched() {
   if (patched || typeof window === 'undefined') return;

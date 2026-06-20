@@ -202,19 +202,15 @@ export type FacetJurisdiction = 'All' | Jurisdiction | 'Other';
 export type FacetContact = 'Any' | 'has-dpo' | 'has-privacy' | 'has-postal' | 'has-any';
 export type FacetRisk = 'All' | 'broker' | 'ad-tech' | 'consumer';
 
+export type BreadthMode = 'standard' | 'verified' | 'speculative';
+
 export interface ServiceFilter {
   search: string;
   category: ServiceCategory | 'All';
   region: Region | 'All';
-  includeSpeculative: boolean;
-  // "Verified only" hides Inferred-confidence rows so users who want a
-  // curated experience over the full 2,900-row long tail can opt in.
-  verifiedOnly: boolean;
-  // Faceted rail axes (rail surfaces composition with live counts; the
-  // 3-way breadth segmented above stays — it's the speculative gate).
+  breadthMode: BreadthMode;
   jurisdiction: FacetJurisdiction;
   contactAvailability: FacetContact;
-  // Empty array = no confidence-tier filter (composes with breadth above).
   confidenceTiers: ConfidenceLevel[];
   riskTier: FacetRisk;
 }

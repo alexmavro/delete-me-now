@@ -18,12 +18,9 @@ interface Props {
   t: Translations;
 }
 
-// Escalation handoff banner. Browsers commonly block mailto: + the
-// secondary https window.open in the same gesture; the old auto-mark
-// path silently lied to the user when both popups failed. This modal
-// stages the complaint text + DPA URL as copyable strings and only
-// marks the service ESCALATED when the user explicitly confirms — the
-// click on "Mark as filed" is the attestation, not the popup.
+// Stages complaint text and DPA URL as copyable strings because browsers
+// commonly block mailto: + a secondary window.open in the same gesture.
+// ESCALATED is only set when the user explicitly confirms, not on popup.
 export function EscalateBanner({
   isOpen,
   onClose,
@@ -59,9 +56,6 @@ export function EscalateBanner({
     }
   };
 
-  // DPA section comes FIRST: the user already has the draft (we generated
-  // it from their context), so the DPA URL is the new artifact this modal
-  // exists to surface. Visual order matches action order.
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={t.escalateBlockedTitle} closeLabel={t.escalateBlockedClose}>
       <div className="space-y-5 text-ink-primary">
@@ -78,13 +72,13 @@ export function EscalateBanner({
               <button
                 type="button"
                 onClick={() => copy(dpaUrl, 'dpa')}
-                className="ml-auto font-sans font-medium text-[14px] text-ink-primary border-b border-honey hover:text-honey transition-colors"
+                className="ml-auto font-sans font-medium text-[14px] text-ink-primary border-b border-accent hover:text-accent transition-colors"
               >
                 {copiedKey === 'dpa' ? t.escalateBlockedCopied : t.escalateBlockedCopyDpa}
               </button>
             </header>
             <p className="font-mono text-[13px] text-ink-secondary bg-canvas-sunken/60 border border-rule p-3 break-all">
-              <a href={dpaUrl} target="_blank" rel="noopener noreferrer" className="hover:text-honey">
+              <a href={dpaUrl} target="_blank" rel="noopener noreferrer" className="hover:text-accent">
                 {dpaUrl}
               </a>
             </p>
@@ -109,7 +103,7 @@ export function EscalateBanner({
             <button
               type="button"
               onClick={() => copy(draftText, 'mailto')}
-              className="ml-auto font-sans font-medium text-[14px] text-ink-primary border-b border-honey hover:text-honey transition-colors"
+              className="ml-auto font-sans font-medium text-[14px] text-ink-primary border-b border-accent hover:text-accent transition-colors"
             >
               {copiedKey === 'mailto' ? t.escalateBlockedCopied : t.escalateBlockedCopyDraft}
             </button>
@@ -120,7 +114,7 @@ export function EscalateBanner({
           <pre
             tabIndex={0}
             aria-label={t.escalateBlockedDraftLabel}
-            className="font-mono text-[13px] text-ink-secondary bg-canvas-sunken/60 border border-rule p-3 max-h-[180px] overflow-auto whitespace-pre-wrap break-words focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-honey focus-visible:outline-offset-2"
+            className="font-mono text-[13px] text-ink-secondary bg-canvas-sunken/60 border border-rule p-3 max-h-[180px] overflow-auto whitespace-pre-wrap break-words focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2"
           >{draftText}</pre>
           {mailtoFailed && (
             <p role="alert" className="font-sans text-[13px] text-critical mt-1.5 leading-snug">

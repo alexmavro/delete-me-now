@@ -5,16 +5,11 @@ import { Modal } from '../ui/Modal';
 import { isSarSupported } from '../../templates';
 import { JURISDICTION_LABELS } from '../../data/jurisdictions';
 
-// Shared input/select classes. Type at 18px / py-3 keeps the field
-// readable on dense forms. Focus moves bg to canvas-elevated so the
-// "lifted" feel doesn't depend solely on the honey ring.
 const INPUT_CLS =
-  'w-full bg-canvas border border-rule-strong px-4 py-3 text-[18px] leading-normal text-ink-primary font-sans focus:border-honey focus:bg-canvas-elevated outline-none transition-colors aria-[invalid=true]:border-critical';
+  'w-full bg-canvas border border-rule-strong px-4 py-3 text-[18px] leading-normal text-ink-primary font-sans focus:border-accent focus:bg-canvas-elevated outline-none transition-colors aria-[invalid=true]:border-critical';
 const INPUT_MONO_CLS = INPUT_CLS.replace('font-sans', 'font-mono').replace('text-[18px]', 'text-[17px]');
 
-// Cheap inline validator — `useProfile.isValid` is the gate for dispatch but
-// it doesn't surface to the user as they type. This mirrors the regex used
-// at parse time; full duplication is fine since the field is local.
+// Mirrors the regex in useProfile; surfaces validation inline as the user types.
 function isValidEmail(s: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s);
 }
@@ -46,9 +41,6 @@ const JURISDICTIONS = Object.entries(JURISDICTION_LABELS) as [Jurisdiction, stri
 const SECTION_LABEL_CLS =
   'font-mono text-[14px] uppercase tracking-[0.14em] text-ink-secondary mb-4';
 
-// Full profile editor as a modal. The identity block lives here rather
-// than as a wizard step. Open it when needed (new user, profile button in
-// top bar); otherwise it stays out of the way.
 export function ProfilePanel({ isOpen, onClose, profile, setProfile, t }: Props) {
   const sarAvailable = isSarSupported(profile.jurisdiction);
 
@@ -168,8 +160,8 @@ export function ProfilePanel({ isOpen, onClose, profile, setProfile, t }: Props)
                     aria-pressed={active}
                     className={`font-sans text-[15px] px-4 py-2.5 border transition-colors ${
                       active
-                        ? 'border-honey text-honey bg-honey-quiet/20'
-                        : 'border-rule-strong text-ink-secondary hover:border-honey/60 hover:text-ink-primary'
+                        ? 'border-accent text-accent bg-accent-soft/50'
+                        : 'border-rule-strong text-ink-secondary hover:border-accent/60 hover:text-ink-primary'
                     }`}
                   >
                     {t[labelKey] as string}
@@ -196,8 +188,8 @@ export function ProfilePanel({ isOpen, onClose, profile, setProfile, t }: Props)
                     disabled
                       ? 'border-rule-soft bg-canvas-sunken opacity-40 cursor-not-allowed'
                       : active
-                      ? 'border-honey bg-honey-quiet/30'
-                      : 'border-rule-strong hover:border-honey/60 hover:bg-canvas'
+                      ? 'border-accent bg-accent-soft/50'
+                      : 'border-rule-strong hover:border-accent/60 hover:bg-canvas'
                   }`}
                 >
                   <input
@@ -233,8 +225,8 @@ export function ProfilePanel({ isOpen, onClose, profile, setProfile, t }: Props)
                   onClick={() => setProfile({ templateStyle: value })}
                   className={`font-mono text-[14px] uppercase tracking-[0.14em] px-4 py-2.5 border transition-colors ${
                     profile.templateStyle === value
-                      ? 'border-honey text-honey bg-honey-quiet/20'
-                      : 'border-rule-strong text-ink-secondary hover:border-honey/60 hover:text-ink-primary'
+                      ? 'border-accent text-accent bg-accent-soft/50'
+                      : 'border-rule-strong text-ink-secondary hover:border-accent/60 hover:text-ink-primary'
                   }`}
                 >
                   {t[labelKey] as string}
@@ -258,7 +250,7 @@ export function ProfilePanel({ isOpen, onClose, profile, setProfile, t }: Props)
             screen-reader accessible without extra JS. */}
         <details className="group details-card border border-rule-strong bg-canvas-elevated max-w-[58ch]">
           <summary className="font-mono text-[13px] uppercase tracking-[0.14em] text-ink-secondary px-5 py-3 cursor-pointer flex items-center gap-2 list-none hover:text-ink-primary transition-colors motion-reduce:transition-none">
-            <span aria-hidden="true" className="text-honey transition-transform motion-reduce:transition-none group-open:rotate-90 inline-block w-3">›</span>
+            <span aria-hidden="true" className="text-accent transition-transform motion-reduce:transition-none group-open:rotate-90 inline-block w-3">›</span>
             {t.dataStorageTitle}
           </summary>
           <div className="px-5 pt-1 pb-4 text-[15px] font-sans leading-relaxed">
@@ -270,7 +262,7 @@ export function ProfilePanel({ isOpen, onClose, profile, setProfile, t }: Props)
         <div className="flex justify-end pt-7 border-t border-rule">
           <button type="button"
             onClick={onClose}
-            className="font-sans font-medium text-[17px] text-ink-primary border-b-2 border-honey hover:text-honey transition-colors pb-1 px-1"
+            className="font-sans font-medium text-[17px] text-ink-primary border-b-2 border-accent hover:text-accent transition-colors pb-1 px-1"
           >
             {t.profileDone} →
           </button>
@@ -280,9 +272,6 @@ export function ProfilePanel({ isOpen, onClose, profile, setProfile, t }: Props)
   );
 }
 
-// Label wraps the input directly. Implicit WCAG label/input association.
-// `<label>` containing both the text and the form control is valid HTML5
-// and screen-reader-correct without needing matching `htmlFor`/`id`.
 function Field({
   label,
   note,
@@ -298,7 +287,7 @@ function Field({
     <label className="block">
       <span className="block font-mono text-[14px] uppercase tracking-[0.14em] text-ink-secondary mb-3">
         {label}
-        {required && <span className="text-honey ml-1.5 normal-case">*</span>}
+        {required && <span className="text-accent ml-1.5 normal-case">*</span>}
       </span>
       {children}
       {note && (
@@ -327,7 +316,7 @@ function CheckboxRow({
         type="checkbox"
         checked={checked}
         onChange={(e) => onChange(e.target.checked)}
-        className="mt-1 shrink-0 accent-honey w-[18px] h-[18px]"
+        className="mt-1 shrink-0 accent-accent w-[18px] h-[18px]"
       />
       <span className="font-sans leading-relaxed">
         <span className="block text-[17px] text-ink-primary">{label}</span>

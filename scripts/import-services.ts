@@ -20,7 +20,7 @@ import { loadPrcBrokers } from './sources/prc-brokers';
 import type { ExternalBroker } from './sources/util';
 
 const REPO_URL = 'https://github.com/datenanfragen/data.git';
-const TEMP_DIR = path.join(__dirname, '../_temp_gdpr_data');
+const TEMP_DIR = path.join(__dirname, '../_upstream_data');
 const OUTPUT_FILE = path.join(__dirname, '../generated-services.json');
 const DPA_OUTPUT_FILE = path.join(__dirname, '../generated-dpa-directory.json');
 const RECOMMENDATIONS_OUTPUT = path.join(__dirname, '../generated-recommendations.json');

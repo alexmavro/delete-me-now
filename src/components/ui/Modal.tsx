@@ -4,6 +4,10 @@ import React, { useEffect, useRef } from 'react';
 // owns keyboard handling so two stacked modals don't both eat Escape.
 const MODAL_STACK: React.MutableRefObject<HTMLDivElement | null>[] = [];
 
+export function isAnyModalOpen(): boolean {
+  return MODAL_STACK.length > 0;
+}
+
 interface ModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -14,13 +18,8 @@ interface ModalProps {
   closeLabel?: string;
 }
 
-// Dark-canvas modal with a real focus trap.
-// - Traps Tab / Shift+Tab inside the modal.
-// - Restores focus to the triggering element on close.
-// - Escape closes.
-// - Click-outside closes.
-//
-// Implements the WCAG 2.1 SC 2.4.3 focus-trap requirement.
+// WCAG 2.1 SC 2.4.3 focus-trapped modal. Tab/Shift+Tab contained; focus
+// restored on close; Escape and click-outside both dismiss.
 export function Modal({
   isOpen,
   onClose,
@@ -108,9 +107,6 @@ export function Modal({
     overlayTone === 'vignette'
       ? 'bg-canvas/90 backdrop-blur-[2px]'
       : 'bg-canvas-sunken/85 backdrop-blur-[2px]';
-  // Vignette modals (LetterPreview) carry a parchment letter card; they need
-  // more vertical space. Default modals (ProfilePanel) get more breathing room
-  // above the title.
   const overlayTopPad = overlayTone === 'vignette' ? 'pt-[3vh] md:pt-[6vh]' : 'pt-[4vh] md:pt-[8vh]';
 
   return (

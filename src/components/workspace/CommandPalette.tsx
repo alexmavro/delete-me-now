@@ -7,8 +7,8 @@ interface Props {
   onClose: () => void;
   selected: Service[];
   unselected: Service[];
-  onJumpToCaseFile: (id: string) => void;
-  onAddToCaseFile: (id: string) => void;
+  onJumpToService: (id: string) => void;
+  onAddToSelection: (id: string) => void;
   onOpenProfile: () => void;
   onToggleTheme: () => void;
   theme: 'light' | 'dark';
@@ -25,8 +25,8 @@ export function CommandPalette({
   onClose,
   selected,
   unselected,
-  onJumpToCaseFile,
-  onAddToCaseFile,
+  onJumpToService,
+  onAddToSelection,
   onOpenProfile,
   onToggleTheme,
   theme,
@@ -97,7 +97,7 @@ export function CommandPalette({
         label: s.name,
         hint: t.paletteJumpToHint,
         run: () => {
-          onJumpToCaseFile(s.id);
+          onJumpToService(s.id);
           onClose();
         },
       }));
@@ -109,16 +109,16 @@ export function CommandPalette({
         kind: 'service-add',
         id: s.id,
         label: s.name,
-        hint: t.paletteAddToCaseFileHint,
+        hint: t.paletteAddHint,
         run: () => {
-          onAddToCaseFile(s.id);
+          onAddToSelection(s.id);
           onClose();
         },
       }));
 
     if (q) return [...inCase, ...addable, ...actions.filter((a) => a.label.toLowerCase().includes(q))];
     return [...actions, ...inCase, ...addable];
-  }, [query, selected, unselected, theme, t, onClose, onJumpToCaseFile, onAddToCaseFile, onOpenProfile, onToggleTheme]);
+  }, [query, selected, unselected, theme, t, onClose, onJumpToService, onAddToSelection, onOpenProfile, onToggleTheme]);
 
   // Keep cursor inside bounds when items change.
   useEffect(() => {
@@ -244,7 +244,7 @@ export function CommandPalette({
                   <span
                     aria-hidden="true"
                     className={`font-mono text-[11px] uppercase tracking-[0.14em] w-12 shrink-0 ${
-                      active ? 'text-honey' : 'text-ink-tertiary'
+                      active ? 'text-accent' : 'text-ink-tertiary'
                     }`}
                   >
                     {tag}

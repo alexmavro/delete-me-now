@@ -4,7 +4,8 @@ import { SVGProps } from 'react';
 export type IconName =
   | 'overview' | 'list' | 'check' | 'send' | 'clock' | 'alert' | 'filter'
   | 'search' | 'plus' | 'chevronDown' | 'settings' | 'bell' | 'sun' | 'moon'
-  | 'user' | 'trash' | 'x' | 'shield' | 'command' | 'arrowRight' | 'download';
+  | 'user' | 'trash' | 'x' | 'shield' | 'command' | 'arrowRight' | 'download'
+  | 'menu';
 
 const PATHS: Record<IconName, JSX.Element> = {
   overview: <><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></>,
@@ -28,6 +29,7 @@ const PATHS: Record<IconName, JSX.Element> = {
   command: <path d="M15 6a3 3 0 1 1 3 3h-3V6ZM9 6a3 3 0 1 0-3 3h3V6Zm0 12a3 3 0 1 0 3-3H9v3Zm6 0a3 3 0 1 0-3-3v3h3Z"/>,
   arrowRight: <path d="M5 12h14M13 6l6 6-6 6"/>,
   download: <path d="M12 3v12m0 0 4-4m-4 4-4-4M5 21h14"/>,
+  menu: <path d="M3 6h18M3 12h18M3 18h18"/>,
 };
 
 interface Props extends SVGProps<SVGSVGElement> {

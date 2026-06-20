@@ -17,11 +17,6 @@ const LANG_NAMES: Record<string, string> = {
   EN: 'English', DE: 'Deutsch', FR: 'Français', ES: 'Español', IT: 'Italiano',
 };
 
-// The letter preview. This is where the tool earns its credibility — the
-// user sees what will actually get sent and it has to look like a piece of
-// correspondence that would survive being forwarded to a lawyer. Rendered
-// on a parchment-ish elevated card against the dark canvas, set in mono
-// (typewriter) with a docket code header.
 export function LetterPreview({ service, profile, onClose, onSend, t }: Props) {
   if (!service) return null;
 
@@ -56,13 +51,12 @@ export function LetterPreview({ service, profile, onClose, onSend, t }: Props) {
       closeLabel={t.previewClose}
     >
       <div className="space-y-6">
-        {/* Docket header — functional metadata about the form. */}
         <div className="font-mono text-[12px] uppercase tracking-[0.14em] text-ink-secondary flex flex-wrap items-center gap-x-3 gap-y-2 pb-4 border-b border-rule">
           <span className="text-ink-primary">FORM {docket}</span>
           <span className="text-ink-tertiary">·</span>
           <span>{new Date().toISOString().slice(0, 10)}</span>
           <span className="text-ink-tertiary">·</span>
-          <span className="text-honey">{t.previewDraftBadge}</span>
+          <span className="text-accent">{t.previewDraftBadge}</span>
           <span className="ml-auto text-ink-secondary normal-case tracking-normal text-[14px]">{langNote}</span>
         </div>
 
@@ -75,7 +69,6 @@ export function LetterPreview({ service, profile, onClose, onSend, t }: Props) {
           <span className="text-ink-primary font-sans text-[17px] leading-snug">{email.subject}</span>
         </div>
 
-        {/* The letter itself — rendered on a parchment-adjacent card. */}
         <div className="bg-[#F4EFE3] text-[#1A1814] border border-rule-strong p-8 font-mono text-[15px] leading-[1.75] whitespace-pre-wrap max-h-[50vh] overflow-y-auto shadow-inner">
           {email.body}
         </div>
@@ -84,7 +77,7 @@ export function LetterPreview({ service, profile, onClose, onSend, t }: Props) {
           {to !== '—' && (
             <button type="button"
               onClick={() => { onSend(service); onClose(); }}
-              className="font-sans font-medium text-[17px] text-ink-primary border-b-2 border-honey hover:text-honey transition-colors pb-0.5 px-0.5"
+              className="font-sans font-medium text-[17px] text-ink-primary border-b-2 border-accent hover:text-accent transition-colors pb-0.5 px-0.5"
             >
               {t.previewOpenInMailClient} →
             </button>

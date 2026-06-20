@@ -17,9 +17,6 @@ const datasetVerifiedAt = (() => {
   return best;
 })();
 
-// Quiet footer. The dot is green while the session has made zero outbound
-// calls; it flips red the moment something escapes. Skeptics open DevTools
-// and verify independently.
 export function Footer({ t }: Props) {
   const { outbound } = useNetworkActivity();
 

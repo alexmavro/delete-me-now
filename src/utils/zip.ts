@@ -23,7 +23,8 @@ export async function downloadBatchZip(
   const date = new Date().toISOString().slice(0, 10);
   const ok: string[] = [];
   const failed: BatchFailure[] = [];
-  const fromAddr = (profile.email || '').trim() || 'sender@example.invalid';
+  const fromAddr = profile.email.trim();
+  if (!fromAddr) throw new Error('Sender email not configured');
 
   for (const service of services) {
     try {

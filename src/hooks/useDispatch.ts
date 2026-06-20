@@ -52,14 +52,11 @@ export interface UseDispatchArgs {
 export type DispatchKind = 'send' | 'followUp';
 
 export interface PendingAttestation {
-  // The id of the service we just acted on. After confirm → markSent or
-  // markFollowUpSent depending on `kind`. After reject → status unchanged.
   serviceId: string;
   kind: DispatchKind;
-  // Tells the UI which kind of action to phrase the prompt around.
   via: SendVia;
   // True when window.open returned null (popup blocker / iframe / sandboxed).
-  // Lets the UI render an explicit "your browser blocked it — allow popups
+  // Lets the UI render an explicit "your browser blocked it; allow popups
   // and click No, retry" hint instead of the bare "did it open?" question.
   popupBlocked: boolean;
 }
@@ -77,14 +74,10 @@ export interface UseDispatchResult {
   isZipping: boolean;
   lastBatch: BatchResult | null;
   downloadAll: () => Promise<void>;
-  // Caller must pass the resolved recipient email (CaseFile already
-  // computes it via getBestEmail). Forcing the param at the type level
-  // removes the silent "no recipient — return" branch and keeps callers
-  // honest: if you can't show a Save-button, you can't call this.
   downloadSingle: (s: Service, to: string) => void;
   clearFailed: () => void;
   // User-facing error string for storage-quota / sandboxed-iframe / Blob
-  // URL throws — the rail surfaces this so a failed click isn't silent.
+  // URL throws; the rail surfaces this so a failed click isn't silent.
   lastError: string | null;
   clearError: () => void;
 }
@@ -104,9 +97,8 @@ export function useDispatch({
   const [lastBatch, setLastBatch] = useState<BatchResult | null>(null);
   const [lastError, setLastError] = useState<string | null>(null);
 
-  // Map internal call sites to user-readable phrasings via locale keys —
-  // never show "downloadAll: QuotaExceededError…" to a user. Raw Error
-  // detail still goes to the dev console.
+  // Map call sites to locale-keyed user-readable phrasings.
+  // Raw Error detail goes to console.warn only.
   const reportError = useCallback(
     (where: 'sendNext' | 'downloadAll' | 'downloadSingle', err: unknown) => {
       console.warn(`useDispatch.${where}:`, err);
@@ -138,7 +130,7 @@ export function useDispatch({
   // Bulk re-ask queue: services the controller never replied to. Auto-advance
   // moves SENT→WAITING→IGNORED after the jurisdiction's reply window. Anything
   // already FOLLOW_UP_SENT is excluded so the cursor doesn't loop. Also
-  // require `lastContacted` — without it the follow-up letter would say
+  // require `lastContacted`; without it the follow-up letter would say
   // "I sent my erasure request on [today]" which is a literal lie in a
   // legal document.
   const ignoredQueue = useMemo(
@@ -184,11 +176,11 @@ export function useDispatch({
         try {
           const safe = next.name.replace(/[^a-zA-Z0-9_-]/g, '_');
           const prefix = kind === 'followUp' ? 'FOLLOWUP' : 'DELETE';
-          const content = buildEmlContent(to, profile.email || 'sender@example.invalid', email);
+          const content = buildEmlContent(to, profile.email, email);
           downloadEml(`${prefix}_${safe}.eml`, content);
           setPendingAttestation({ serviceId: next.id, kind, via: 'eml', popupBlocked: false });
         } catch (err) {
-          reportError('sendNext', err);
+          reportError(sendVia === 'eml' ? 'downloadSingle' : 'sendNext', err);
         }
         return;
       }
@@ -203,15 +195,12 @@ export function useDispatch({
         }
       } catch (err) {
         threw = true;
-        // Log the raw error for the dev console, but don't paint the rail
-        // red: the attestation card's popupBlocked hint already carries the
-        // user-facing signal, and a stacked error banner over the same
-        // attestation is double-counting one failure.
+        // Don't surface as a user-facing error; popupBlocked on the
+        // attestation card already carries the signal.
         console.warn('useDispatch.sendNext:', err);
       }
-      // popupBlocked covers both gmail-blocked and any throw (sandboxed
-      // iframes throw on window.open; mailto: returns null even on success
-      // so we can't distinguish there, but a throw is a true "didn't open").
+      // mailto: always returns null (even on success), so only throws and
+      // gmail null-returns are reliable blocked signals.
       const popupBlocked = threw || (sendVia === 'gmail' && win === null);
       setPendingAttestation({ serviceId: next.id, kind, via: sendVia, popupBlocked });
     },
@@ -224,7 +213,7 @@ export function useDispatch({
     if (!next) return;
     if (!getBestEmail(next.contacts)) return;
     const email = getEmail(next);
-    // Each fresh send-next attempt clears the stale batch banner — leaving
+    // Each fresh send-next attempt clears the stale batch banner; leaving
     // a "2 of 7 failed" line above an unrelated single send is misleading.
     if (lastBatch) setLastBatch(null);
     if (lastError) setLastError(null);
@@ -268,14 +257,9 @@ export function useDispatch({
         (s) => getEmail(s),
       );
       setLastBatch(result);
-      // ⚠ We mark `ok` services SENT here even though `<a download>` cancel
-      // is unobservable — same root cause as the .eml single-shot.  The
-      // honest defence: bulk batches WERE handed to the browser; the user
-      // just clicked Download all, so the action *was* triggered.  Per-row
-      // attestation for 50+ services would be hostile UX.  The Dismiss-able
-      // batch summary line + per-row "failed" tag let the user see exactly
-      // what we counted; if a service was wrongly auto-SENT, they fix it
-      // by deselecting + re-adding (lifecycle goes back to PENDING).
+      // <a download> cancel is unobservable, so we auto-mark ok services
+      // SENT. Per-row attestation for 50+ services would be hostile UX;
+      // the batch summary lets users spot and fix any wrong counts.
       result.ok.forEach((id) => markSent(id));
     } catch (err) {
       // Top-level packaging failure (jszip itself died, or the blob URL was
@@ -294,20 +278,13 @@ export function useDispatch({
 
   const downloadSingle = useCallback(
     (s: Service, to: string) => {
-      // One attestation at a time — if the rail is already prompting on a
-      // different service, ignore this click. The user resolves the open
-      // attestation first.
       if (pendingAttestation) return;
       try {
         const email = getEmail(s);
         const safe = s.name.replace(/[^a-zA-Z0-9_-]/g, '_');
-        const content = buildEmlContent(to, profile.email || 'sender@example.invalid', email);
+        const content = buildEmlContent(to, profile.email, email);
         downloadEml(`DELETE_${safe}.eml`, content);
-        // Same attestation prompt as sendNext's .eml branch — the
-        // <a download> cancel is unobservable, so we ASK before marking
-        // SENT. Without this, the row stays PENDING after a successful save
-        // and the all-done banner becomes unreachable for users who only
-        // ever click Save .eml. Stale batch banner clears on each fresh action.
+        // Ask before marking SENT; <a download> cancel is unobservable.
         if (lastBatch) setLastBatch(null);
         if (lastError) setLastError(null);
         setPendingAttestation({ serviceId: s.id, kind: 'send', via: 'eml', popupBlocked: false });

@@ -21,19 +21,21 @@ import { Footer } from './components/workspace/Footer';
 import { ProfilePanel } from './components/workspace/ProfilePanel';
 import { LetterPreview } from './components/workspace/LetterPreview';
 import { CommandPalette } from './components/workspace/CommandPalette';
+import { MobileDrawer } from './components/workspace/MobileDrawer';
 import { EscalateBanner } from './components/workspace/EscalateBanner';
 import { ResponseCaptureModal } from './components/workspace/ResponseCaptureModal';
+import { AttestationBar } from './components/workspace/AttestationBar';
 import { Icon } from './components/ui/Icon';
 import { storage } from './utils/storage';
 
 const LANG_TO_BCP47: Record<string, string> = { EN: 'en', DE: 'de', FR: 'fr', ES: 'es', IT: 'it' };
 
-const VIEW_TITLE: Record<View, string> = {
-  overview: 'Overview',
-  all: 'All targets',
-  sent: 'Sent',
-  awaiting: 'Awaiting reply',
-  attention: 'Needs attention',
+const VIEW_TITLE_KEY: Record<View, keyof import('./locales/en').Translations> = {
+  overview: 'viewOverview',
+  all: 'viewAll',
+  sent: 'viewSent',
+  awaiting: 'viewAwaiting',
+  attention: 'viewAttention',
 };
 
 const SENT_SET = [RequestStatus.SENT, RequestStatus.FOLLOW_UP_SENT];
@@ -55,6 +57,7 @@ export default function App() {
     service: Service; complaint: GeneratedEmail; dpaUrl: string | null; mailtoFailed: boolean; dpaFailed: boolean;
   } | null>(null);
   const [respondingTo, setRespondingTo] = useState<Service | null>(null);
+  const [drawerOpen, setDrawerOpen] = useState(false);
 
   useEffect(() => {
     document.documentElement.lang = LANG_TO_BCP47[profile.language] ?? 'en';
@@ -105,18 +108,20 @@ export default function App() {
   });
 
   const handleSend = useCallback((s: Service) => {
+    if (!isValid) { setProfileOpen(true); return; }
     const to = getBestEmail(s.contacts);
     if (!to) { console.warn('handleSend: no contact email for', s.id); return; }
     window.open(buildMailtoUrl(to, getServiceEmail(s)));
     services.updateStatus(s.id, RequestStatus.SENT);
-  }, [getServiceEmail, services]);
+  }, [isValid, getServiceEmail, services]);
 
   const handleFollowUp = useCallback((s: Service) => {
+    if (!isValid) { setProfileOpen(true); return; }
     const to = getBestEmail(s.contacts);
     if (!to) { console.warn('handleFollowUp: no contact email for', s.id); return; }
     window.open(buildMailtoUrl(to, getFollowUpServiceEmail(s)));
     services.markFollowUpSent(s.id);
-  }, [getFollowUpServiceEmail, services]);
+  }, [isValid, getFollowUpServiceEmail, services]);
 
   const handleEscalate = useCallback((s: Service) => {
     const dpa = s.headquarterCountry ? getDpaForCountry(s.headquarterCountry) : undefined;
@@ -162,7 +167,7 @@ export default function App() {
     services.captureResponse(respondingTo.id, replyText, classification);
   }, [respondingTo, services]);
 
-  const handleJumpToCaseFile = useCallback((id: string) => {
+  const handleJumpToService = useCallback((id: string) => {
     services.setFilter({ search: '' }); // else a live search filter can hide the jump target
     setView('overview');
     requestAnimationFrame(() => {
@@ -246,11 +251,20 @@ export default function App() {
         view={view} onSetView={setView} counts={counts}
         packs={packLinks} onSelectPack={handleSelectPack}
         profile={profile} onOpenProfile={() => setProfileOpen(true)}
+        t={t}
       />
 
       <main className="flex flex-col min-w-0 overflow-hidden">
         <header className="flex items-center gap-3 px-5 md:px-7 py-3.5 border-b border-rule">
-          <h1 className="text-[19px] font-semibold tracking-[-0.025em]">{VIEW_TITLE[view]}</h1>
+          <button
+            type="button"
+            onClick={() => setDrawerOpen(true)}
+            aria-label="Open menu"
+            className="lg:hidden w-[34px] h-[34px] grid place-items-center rounded-[9px] border border-rule-strong bg-canvas-elevated shadow-sm text-ink-secondary hover:text-ink-primary hover:border-ink-tertiary transition-colors shrink-0"
+          >
+            <Icon name="menu" size={16} />
+          </button>
+          <h1 className="text-[19px] font-semibold tracking-[-0.025em]">{t[VIEW_TITLE_KEY[view]] as string}</h1>
           {browse && <span className="text-[13px] text-ink-tertiary hidden sm:inline">{services.filteredUnselected.length.toLocaleString()} companies</span>}
           <div className="flex-1" />
           <label className="flex items-center gap-2 bg-canvas-elevated border border-rule-strong rounded-[9px] px-3 py-2 shadow-sm w-[180px] md:w-[240px] focus-within:border-accent transition-colors">
@@ -258,7 +272,7 @@ export default function App() {
             <input
               value={services.filter.search}
               onChange={(e) => services.setFilter({ search: e.target.value })}
-              placeholder="Search companies"
+              placeholder={t.searchPlaceholder}
               className="flex-1 bg-transparent outline-none text-[13.5px] min-w-0"
               aria-label="Search companies"
             />
@@ -273,7 +287,7 @@ export default function App() {
         </header>
 
         <div className="flex-1 overflow-y-auto px-5 md:px-7 py-6">
-          {view === 'overview' && <Overview stats={overviewStats} />}
+          {view === 'overview' && <Overview stats={overviewStats} t={t} />}
 
           {dispatch.lastError && (
             <div className="flex items-center gap-3 mb-4 px-4 py-3 rounded-[10px] bg-critical-wash border border-critical/30 text-[13.5px]">
@@ -285,16 +299,16 @@ export default function App() {
           <div className="bg-canvas-elevated border border-rule rounded-[14px] shadow-sm overflow-hidden">
             {!browse && services.selected.length > 0 && (
               <div className="flex items-center gap-3.5 px-4 py-2.5 bg-accent-soft border-b border-rule">
-                <span className="text-[13.5px] font-medium text-accent">{manageRows.length} shown · {services.selected.length} selected</span>
+                <span className="text-[13.5px] font-medium text-accent">{t.bulkShown(manageRows.length, services.selected.length)}</span>
                 <div className="flex-1" />
-                <button className="text-[13px] text-ink-secondary hover:text-ink-primary disabled:opacity-40" disabled={dispatch.isZipping || dispatch.pendingQueue.length === 0} onClick={dispatch.downloadAll}>Save .eml</button>
-                <button className="text-[13px] text-ink-secondary hover:text-ink-primary" onClick={services.deselectAll}>Deselect all</button>
+                <button className="text-[13px] text-ink-secondary hover:text-ink-primary disabled:opacity-40" disabled={!isValid || dispatch.isZipping || dispatch.pendingQueue.length === 0} onClick={dispatch.downloadAll}>{t.bulkSaveEml}</button>
+                <button className="text-[13px] text-ink-secondary hover:text-ink-primary" onClick={services.deselectAll}>{t.bulkDeselectAll}</button>
                 <button
                   className="inline-flex items-center gap-2 bg-accent hover:bg-accent-hover text-white rounded-lg px-4 py-2 text-[13.5px] font-medium shadow-sm disabled:opacity-40 transition-colors"
-                  disabled={dispatch.pendingQueue.length === 0 || !!dispatch.pendingAttestation}
+                  disabled={!isValid || dispatch.pendingQueue.length === 0 || !!dispatch.pendingAttestation}
                   onClick={dispatch.sendNext}
                 >
-                  <Icon name="send" size={14} /> Send {dispatch.pendingQueue.length} request{dispatch.pendingQueue.length === 1 ? '' : 's'}
+                  <Icon name="send" size={14} /> {t.bulkSend(dispatch.pendingQueue.length)}
                 </button>
               </div>
             )}
@@ -305,6 +319,7 @@ export default function App() {
                 popupBlocked={dispatch.pendingAttestation.popupBlocked}
                 onConfirm={dispatch.confirmSend}
                 onReject={dispatch.rejectSend}
+                t={t}
               />
             )}
 
@@ -317,13 +332,13 @@ export default function App() {
               renderAction={browse ? undefined : rowAction}
               empty={
                 <div>
-                  <p className="text-[20px] font-semibold tracking-[-0.02em]">{browse ? 'No matches' : 'Nothing here yet'}</p>
+                  <p className="text-[20px] font-semibold tracking-[-0.02em]">{browse ? t.emptyBrowse : t.emptyManage}</p>
                   <p className="text-ink-secondary mt-2 text-[14px] max-w-[34ch]">
-                    {browse ? 'Try a different search.' : 'Add companies from All targets, then send your deletion requests.'}
+                    {browse ? t.emptyBrowseHint : t.emptyManageHint}
                   </p>
                   {!browse && (
                     <button onClick={() => setView('all')} className="mt-4 inline-flex items-center gap-2 text-accent text-[13.5px] font-medium">
-                      <Icon name="plus" size={15} /> Browse all targets
+                      <Icon name="plus" size={15} /> {t.emptyBrowseAction}
                     </button>
                   )}
                 </div>
@@ -335,6 +350,13 @@ export default function App() {
         <Footer t={t} />
       </main>
 
+      <MobileDrawer
+        isOpen={drawerOpen} onClose={() => setDrawerOpen(false)}
+        view={view} onSetView={setView} counts={counts}
+        packs={packLinks} onSelectPack={handleSelectPack}
+        profile={profile} onOpenProfile={() => setProfileOpen(true)}
+        t={t}
+      />
       <WelcomeModal isOpen={welcomeOpen} onClose={closeWelcome} />
       <ProfilePanel isOpen={profileOpen} onClose={() => setProfileOpen(false)} profile={profile} setProfile={setProfile} t={t} />
       <LetterPreview service={preview} profile={profile} onClose={() => setPreview(null)} onSend={handleSend} t={t} />
@@ -348,23 +370,9 @@ export default function App() {
       <CommandPalette
         isOpen={paletteOpen} onClose={() => setPaletteOpen(false)}
         selected={services.selected} unselected={services.filteredUnselected}
-        onJumpToCaseFile={handleJumpToCaseFile} onAddToCaseFile={services.toggle}
+        onJumpToService={handleJumpToService} onAddToSelection={services.toggle}
         onOpenProfile={() => setProfileOpen(true)} onToggleTheme={toggleTheme} theme={theme} t={t}
       />
-    </div>
-  );
-}
-
-function AttestationBar({ name, popupBlocked, onConfirm, onReject }: { name: string; popupBlocked: boolean; onConfirm: () => void; onReject: () => void }) {
-  return (
-    <div className="flex flex-wrap items-center gap-3 px-4 py-3 bg-honey-quiet border-b border-rule">
-      <span className="text-[13.5px]">
-        Did <b className="font-semibold">{name}</b>'s request open in your mail app?
-        {popupBlocked && <span className="text-honey"> Your browser blocked the popup — allow it, then retry.</span>}
-      </span>
-      <div className="flex-1" />
-      <button className="text-[13px] text-ink-secondary hover:text-ink-primary" onClick={onReject}>Not yet</button>
-      <button className="bg-positive text-white rounded-lg px-3.5 py-1.5 text-[13px] font-medium" onClick={onConfirm}>Yes, mark sent</button>
     </div>
   );
 }

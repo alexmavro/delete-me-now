@@ -42,11 +42,9 @@ function makeDefaultProfile(): UserProfile {
   };
 }
 
-// Single source of truth for the profile keys that flow into mail headers
-// + .eml To/From + template bodies. Anything new added to UserProfile that
-// is a free-text user-entered string MUST be added here too. parseProfile
-// (load) and setProfile (update) both run through this so paste-with-CRLF
-// or devtools-edit injection never reaches buildEmlContent / mailto URIs.
+// Free-text profile fields that flow into mail headers and .eml content.
+// Any new user-entered string field MUST be added here; both parseProfile
+// and setProfile run through this to block CRLF header injection.
 const HEADER_BOUND_KEYS = ['fullName', 'email', 'address', 'phone'] as const;
 type HeaderBoundKey = (typeof HEADER_BOUND_KEYS)[number];
 
@@ -126,9 +124,6 @@ export function useProfile() {
     storage.set('profile', profile);
   }, [profile]);
 
-  // Stable identities so memoized children + effect deps don't churn.
-  // Header-bound free-text fields go through sanitizeHeaderBound — same
-  // defence as parseProfile, single source of truth in HEADER_BOUND_KEYS.
   const setProfile = useCallback((updates: Partial<UserProfile>) => {
     setProfileRaw((prev) => ({ ...prev, ...sanitizeHeaderBound(updates) }));
   }, []);
@@ -137,12 +132,7 @@ export function useProfile() {
     setProfileRaw(makeDefaultProfile());
   }, []);
 
-  // Strict-enough email gate. The dispatch surface uses this to allow Send
-  // next / Download all — letting "asdf" through means recipients receive
-  // bouncing erasure requests, which destroys the credibility-stack.
-  // RFC 5321 says local-part can be almost anything; we accept a pragmatic
-  // shape (something@something.something, no whitespace) and let the user's
-  // mail server be the canonical validator.
+  // Pragmatic shape check; real validation is the mail server's job.
   const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   const isValid =
     profile.fullName.trim() !== '' && EMAIL_RE.test(profile.email.trim());

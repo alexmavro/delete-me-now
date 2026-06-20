@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import { Service, ServiceFilter, RequestStatus, ResponseStatus, SmartPackId, EU_REGIONS, Region, StagedEscalation, ConfidenceLevel, FacetContact, FacetRisk, FacetJurisdiction } from '../types';
+import { Service, ServiceFilter, RequestStatus, ResponseStatus, SmartPackId, EU_REGIONS, Region, StagedEscalation, FacetContact, FacetRisk } from '../types';
 import { INITIAL_SERVICES } from '../data/services';
 import { SMART_PACKS } from '../data/jurisdictions';
 import { storage } from '../utils/storage';
@@ -54,7 +54,7 @@ function mergeWithSaved(saved: Service[]): Service[] {
     // User-created (source==='manual') stay as-is; upstream removals get
     // tagged so the UI can surface "removed upstream" rather than letting
     // the user wonder why their tracker entry no longer maps to a real
-    // company. The flag is recomputed every hydration — the matched-row
+    // company. The flag is recomputed every hydration; the matched-row
     // branch above spreads `...init` first, so a stale persisted flag is
     // dropped if upstream re-adds the company.
     saved
@@ -67,8 +67,7 @@ const DEFAULT_FILTER: ServiceFilter = {
   search: '',
   category: 'All',
   region: 'All',
-  includeSpeculative: false,
-  verifiedOnly: false,
+  breadthMode: 'standard',
   jurisdiction: 'All',
   contactAvailability: 'Any',
   confidenceTiers: [],
@@ -116,10 +115,8 @@ export function useServices() {
   const isSpeculative = (s: Service) =>
     s.categories.includes('Data Broker') || s.categories.includes('Ad Tech') || s.confidence === 'Inferred';
 
-  // Region matcher used by both the dropdown filter and the tag-search
-  // path so EU expansion stays in one place. Unknown region codes
-  // (typo, future region) return true so an invalid `region:zz` doesn't
-  // silently zero the directory — better to ignore than to delete.
+  // Unknown region codes return true; an invalid `region:zz` should
+  // be ignored rather than silently empty the directory.
   const KNOWN_REGIONS: ReadonlySet<string> = new Set([
     'Global', 'EU',
     'DE', 'FR', 'IT', 'ES', 'NL', 'BE', 'AT', 'PL', 'SE', 'DK',
@@ -140,24 +137,11 @@ export function useServices() {
   // name matching for everything else.
   const parsedQuery = useMemo(() => parseQuery(filter.search), [filter.search]);
 
-  // Filter pipe — see compose-order note on `verifiedOnly` + `includeSpeculative`.
-  // verifiedOnly fires first (only Verified-confidence rows survive), then
-  // !includeSpeculative kills any remaining isSpeculative rows. This means
-  // a Verified-confidence data-broker passes verifiedOnly but gets dropped
-  // unless the user also opts in to Broad mode. The Directory's segmented
-  // control enforces these as mutually exclusive — both true is unreachable
-  // through the UI, but the hook stays defensive for future paths.
-  // Predicate split out so facetCounts can probe each axis under the OTHER
-  // axes. That's how live counts stay honest when one facet narrows the
-  // dataset (count(jurisdiction=GDPR) shifts as user toggles has-dpo).
-  // skipFacet allows excluding a single axis from the predicate so we can
-  // count its members under everything else.
-  type FacetAxis = 'jurisdiction' | 'contact' | 'confidence' | 'risk';
   const matchesFilter = useCallback(
-    (s: Service, skip?: FacetAxis): boolean => {
+    (s: Service): boolean => {
       if (s.selected) return false;
-      if (filter.verifiedOnly && s.confidence !== 'Verified') return false;
-      if (!filter.includeSpeculative && isSpeculative(s)) return false;
+      if (filter.breadthMode === 'verified' && s.confidence !== 'Verified') return false;
+      if (filter.breadthMode !== 'speculative' && isSpeculative(s)) return false;
       if (filter.category !== 'All' && !s.categories.includes(filter.category)) return false;
       if (filter.region !== 'All' && !regionMatches(s.regions, filter.region)) return false;
       if (parsedQuery.tags.tag && !categoryMatches(s.categories, parsedQuery.tags.tag)) return false;
@@ -170,12 +154,10 @@ export function useServices() {
         if (r === 'low' && high) return false;
       }
       if (parsedQuery.text && !s.name.toLowerCase().includes(parsedQuery.text)) return false;
-      if (skip !== 'jurisdiction' && filter.jurisdiction !== 'All' &&
-        getJurisdiction(s) !== filter.jurisdiction) return false;
-      if (skip !== 'contact' && !matchesContactFacet(s, filter.contactAvailability)) return false;
-      if (skip !== 'confidence' && filter.confidenceTiers.length > 0 &&
-        !filter.confidenceTiers.includes(s.confidence)) return false;
-      if (skip !== 'risk' && !matchesRiskFacet(s, filter.riskTier)) return false;
+      if (filter.jurisdiction !== 'All' && getJurisdiction(s) !== filter.jurisdiction) return false;
+      if (!matchesContactFacet(s, filter.contactAvailability)) return false;
+      if (filter.confidenceTiers.length > 0 && !filter.confidenceTiers.includes(s.confidence)) return false;
+      if (!matchesRiskFacet(s, filter.riskTier)) return false;
       return true;
     },
     [filter, parsedQuery],
@@ -185,50 +167,6 @@ export function useServices() {
     () => services.filter((s) => matchesFilter(s)),
     [services, matchesFilter],
   );
-
-  // Per-facet counts under the OTHER current filters. Count for facet X's
-  // value v = how many rows would match if facet X were set to v while all
-  // other axes stayed at their current value. Drives the live-count badges
-  // in FacetRail. O(N × axes); fine on 2,924 rows.
-  const facetCounts = useMemo(() => {
-    const jurisdiction: Record<FacetJurisdiction, number> = {
-      All: 0, GDPR: 0, UK_GDPR: 0, CCPA: 0, LGPD: 0, Other: 0,
-    };
-    const contact: Record<FacetContact, number> = {
-      Any: 0, 'has-dpo': 0, 'has-privacy': 0, 'has-postal': 0, 'has-any': 0,
-    };
-    const confidence: Record<ConfidenceLevel, number> = {
-      Verified: 0, Community: 0, Inferred: 0, Manual: 0,
-    };
-    const risk: Record<FacetRisk, number> = {
-      All: 0, broker: 0, 'ad-tech': 0, consumer: 0,
-    };
-    for (const s of services) {
-      if (matchesFilter(s, 'jurisdiction')) {
-        jurisdiction.All += 1;
-        jurisdiction[getJurisdiction(s)] += 1;
-      }
-      if (matchesFilter(s, 'contact')) {
-        contact.Any += 1;
-        if (s.contacts.dpo) contact['has-dpo'] += 1;
-        if (s.contacts.privacy) contact['has-privacy'] += 1;
-        if (s.contacts.postalAddress) contact['has-postal'] += 1;
-        if (s.contacts.dpo || s.contacts.privacy || s.contacts.general || s.contacts.postalAddress) {
-          contact['has-any'] += 1;
-        }
-      }
-      if (matchesFilter(s, 'confidence')) {
-        confidence[s.confidence] += 1;
-      }
-      if (matchesFilter(s, 'risk')) {
-        risk.All += 1;
-        if (s.categories.includes('Data Broker')) risk.broker += 1;
-        else if (s.categories.includes('Ad Tech')) risk['ad-tech'] += 1;
-        else risk.consumer += 1;
-      }
-    }
-    return { jurisdiction, contact, confidence, risk };
-  }, [services, matchesFilter]);
 
   const selected = useMemo(() => services.filter((s) => s.selected), [services]);
 
@@ -280,16 +218,16 @@ export function useServices() {
     setServicesRaw((prev) => prev.map((s) => ({ ...s, selected: false })));
   }, []);
 
-  const addCustom = useCallback((name: string, email?: string) => {
+  const addCustom = useCallback((name: string, email?: string): boolean => {
     const trimmedName = name.trim();
     if (!trimmedName) {
       console.warn('addCustom: refusing empty name');
-      return;
+      return false;
     }
     const slug = trimmedName.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
     if (!slug) {
       console.warn('addCustom: refusing name that yields empty slug:', trimmedName);
-      return;
+      return false;
     }
     const newService: Service = {
       id: `custom-${Date.now()}`,
@@ -305,6 +243,7 @@ export function useServices() {
       notes: 'Manually added',
     };
     setServicesRaw((prev) => [newService, ...prev]);
+    return true;
   }, []);
 
   const importServices = useCallback((incoming: Service[]) => {
@@ -315,9 +254,6 @@ export function useServices() {
     });
   }, []);
 
-  // Status-transition mutators below all clear stagedEscalation when leaving
-  // ESCALATION_READY: the persisted draft is meaningful only while the row is
-  // ready to escalate. Closing, marking responded, etc. invalidate the draft.
   const updateStatus = useCallback((id: string, status: RequestStatus) => {
     setServicesRaw((prev) =>
       prev.map((s) =>
@@ -410,7 +346,7 @@ export function useServices() {
 
   // Free-text local note per service (audit trail: "they asked for ID
   // copy", "claimed exemption under Art. 23"). Trimmed; empty string
-  // clears it. Sanitization is deliberately not applied — notes are
+  // clears it. Sanitization is deliberately not applied; notes are
   // local-only for the user, never flow into mailto/header surfaces.
   const setNotes = useCallback((id: string, text: string) => {
     const trimmed = text.trim();
@@ -425,7 +361,7 @@ export function useServices() {
   // record date + classification, and advance to RESPONDED (or PARTIAL
   // when the controller satisfied only part of the request).
   // Asymmetry vs setNotes (intentional): captureResponse never CLEARS
-  // notes — empty/whitespace text preserves prior notes (the user might
+  // notes; empty/whitespace text preserves prior notes (the user might
   // be capturing a phone-call response with no pasted text, but their
   // hand-written audit note still matters). To clear, use NotesBlock's
   // explicit empty-save path through setNotes.
@@ -546,7 +482,6 @@ export function useServices() {
     advanceLifecycle,
     setNotes,
     captureResponse,
-    facetCounts,
     stats,
   };
 }
