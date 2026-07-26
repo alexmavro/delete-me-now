@@ -37,25 +37,31 @@ export const EU_REGIONS: Region[] = [
 
 // === Service Classification ===
 
+// Every value below is carried by at least one row in the shipped dataset,
+// except `Imported`, which only ever comes from a service the user adds by
+// hand. A category nothing can match is a filter that always returns empty
+// and a pack that always selects nothing, so new values earn their place by
+// having an upstream tag behind them.
 export type ServiceCategory =
   | 'Social'
   | 'Shopping'
   | 'Utility'
   | 'Data Broker'
   | 'Ad Tech'
-  | 'Analytics'
   | 'Finance'
+  | 'Credit Agency'
+  | 'Debt Collection'
   | 'Insurance'
   | 'Travel'
   | 'Telecom'
   | 'Health'
-  | 'Government'
+  | 'Public Body'
+  | 'Political Party'
   | 'Education'
+  | 'Religious'
+  | 'Nonprofit'
   | 'Entertainment'
-  | 'News & Media'
-  | 'Cloud & Hosting'
-  | 'IoT & Smart Home'
-  | 'Other'
+  | 'Uncategorised'
   | 'Imported';
 
 export type ConfidenceLevel = 'Verified' | 'Community' | 'Inferred' | 'Manual';
@@ -106,6 +112,15 @@ export interface ServiceRecord {
   lastVerified?: string;
   relevantDpa?: string;
   dpaComplaintUrl?: string;
+  /** Brands this entity operates. Searched alongside `name`. */
+  alsoKnownAs?: string[];
+  /** This company demands proof of identity before it will act. */
+  needsIdDocument?: boolean;
+  /** The request route the company filed with its regulator, quoted verbatim. */
+  declaredRequestRoute?: string;
+  /** Which register that declaration sits in. */
+  registryName?: string;
+  registeredSince?: string;
 }
 
 // === Service: User State (localStorage only) ===
@@ -224,17 +239,17 @@ export type SmartPackId =
   | 'eu-adtech'
   | 'social-media'
   | 'telecom'
-  | 'analytics'
+  | 'credit-debt'
+  | 'public-body'
   | 'health-insurance'
   | 'finance-exposure'
   | 'online-footprint'
   | 'full-cleanup';
 
+// Copy lives in the locale files under `packCopy`, keyed by id, so a pack's
+// name and explanation translate like every other string in the app.
 export interface SmartPack {
   id: SmartPackId;
-  label: string;
-  description: string;
-  longDescription?: string;
   match: (service: Service) => boolean;
 }
 

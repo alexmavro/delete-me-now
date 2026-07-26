@@ -1,4 +1,5 @@
 import { Translations } from './en';
+import { SmartPackId } from '../types';
 
 export const es: Translations = {
   appName: 'Delete Me Now',
@@ -193,4 +194,61 @@ export const es: Translations = {
   dispatchErrorOpening: 'No se pudo abrir el mensaje',
   dispatchErrorPackaging: 'No se pudo empaquetar el lote',
   dispatchErrorSaving: 'No se pudo guardar el archivo',
+
+  packCopy: {
+    'standard': { label: 'Contactos confirmados', body: 'Toda empresa cuya dirección se ha confirmado con una fuente publicada, o se ha demostrado con una solicitud realmente atendida. Deja fuera las direcciones extraídas automáticamente y nunca comprobadas.' },
+    'data-brokers': { label: 'Intermediarios de datos', body: 'Empresas que recopilan y venden tu información sin haber tratado nunca contigo. Incluye todo el registro de California, obligatorio para los intermediarios que operan allí.' },
+    'eu-brokers': { label: 'Intermediarios europeos', body: 'Vendedores de direcciones y agencias de crédito europeos que perfilan a personas que nunca se dieron de alta con ellos — Schober, Acxiom, CRIF, Bisnode, Deutsche Post Direkt y similares.' },
+    'eu-adtech': { label: 'Publicidad digital (UE)', body: 'Empresas publicitarias que operan en Europa y te siguen entre webs para construir un perfil de segmentación.' },
+    'social-media': { label: 'Redes sociales', body: 'Plataformas que guardan tus publicaciones, mensajes, contactos y el comportamiento que deducen de todo ello.' },
+    'telecom': { label: 'Teléfono e internet', body: 'Operadoras y proveedores de internet. Tienen registros de llamadas, historial de ubicación y, en algunos países, lo que navegaste.' },
+    'credit-debt': { label: 'Crédito y cobros', body: 'Las agencias de crédito te puntúan para bancos, caseros y empleadores con datos que nunca les diste. Las empresas de cobro guardan historiales de pago comprados a terceros.' },
+    'public-body': { label: 'Organismos públicos', body: 'Administraciones, juzgados y ayuntamientos. Buena parte de lo que guardan responde a una obligación legal, así que la supresión suele denegarse: preguntar qué tienen llega más lejos.' },
+    'health-insurance': { label: 'Salud y seguros', body: 'Médicos, farmacias, apps de salud y aseguradoras. La categoría más sensible, y la más protegida por la ley.' },
+    'finance-exposure': { label: 'Dinero e intermediarios', body: 'Todos los que guardan o comercian con tu vida financiera: bancos, aseguradoras, agencias de crédito, empresas de cobro e intermediarios de datos.' },
+    'online-footprint': { label: 'Huella digital', body: 'El rastro que dejas solo por existir en internet — plataformas sociales, rastreadores publicitarios y servicios de entretenimiento que anotan qué ves.' },
+    'full-cleanup': { label: 'Todo', body: 'Todas las empresas del directorio. La red más amplia posible, y muchísimas cartas.' },
+  } as Record<SmartPackId, { label: string; body: string }>,
+
+  wizardTitle: 'Crea tu lista',
+  wizardStepOf: (n: number, total: number) => `Paso ${n} de ${total}`,
+  wizardBack: 'Atrás',
+  wizardNext: 'Siguiente',
+  wizardCancel: 'Cancelar',
+  wizardCountryTitle: '¿Dónde estás?',
+  wizardCountryBody:
+    'Esto determina bajo qué ley escribes, en qué idioma salen las cartas y a qué autoridad puedes recurrir.',
+  wizardGoalTitle: '¿Qué quieres limpiar?',
+  wizardGoalBody:
+    'Elige un punto de partida. Después puedes acotar, y no se envía nada hasta que lo revises.',
+  wizardGoalCount: (n: number) => `${n.toLocaleString('es-ES')} empresas`,
+  wizardRefineTitle: 'Acotar',
+  wizardRefineBody:
+    'Todo es opcional. Si la lista ya te encaja, pasa directamente a la revisión.',
+  wizardRefineCategory: 'Categoría',
+  wizardRefineRegion: 'Región',
+  wizardRefineAny: 'Cualquiera',
+  wizardRefineDpoOnly: 'Solo empresas con delegado de protección de datos',
+  wizardRefineDpoNote: 'Suelen responder de forma más fiable.',
+  wizardRefineVerifiedOnly: 'Solo direcciones de contacto confirmadas',
+  wizardRefineVerifiedNote:
+    'Deja fuera las direcciones extraídas automáticamente y nunca comprobadas.',
+  wizardReviewTitle: 'Revisa tu lista',
+  wizardReviewEmpty: 'No hay coincidencias. Vuelve atrás y amplía la selección.',
+  wizardReviewSample: 'Una muestra de lo que vas a añadir:',
+  wizardReviewMore: (n: number) => `y ${n.toLocaleString('es-ES')} más`,
+  wizardCommit: (n: number) => `Añadir ${n.toLocaleString('es-ES')} a mi lista`,
+  wizardAdded: (n: number) => `${n.toLocaleString('es-ES')} empresas añadidas a tu lista.`,
+  wizardPublicBodyWarning:
+    'Los organismos públicos suelen conservar registros que están legalmente obligados a mantener, así que la supresión se deniega a menudo. Preguntar qué tienen sobre ti suele llegar más lejos: puedes cambiar a una solicitud de acceso en tu perfil.',
+  wizardIdWarning: (n: number) =>
+    `${n} de ellas te pedirán acreditar tu identidad antes de actuar.`,
+
+  searchSyntaxHint: 'Trucos: cat:finance · region:DE · risk:high',
+  brandAliasNote: (brands: string) => `También opera ${brands}`,
+  needsIdBadge: 'Pide identificación',
+  storageFailed: 'No se pudo guardar tu progreso. El almacenamiento del navegador está lleno o bloqueado (el modo privado hace esto) — la lista en pantalla sigue funcionando, pero desaparecerá al cerrar la pestaña.',
+  tableShowMore: 'Mostrar más',
+  tableMoreCount: (n: number) => `${n.toLocaleString('es-ES')} más`,
+  tableSelectShown: (n: number) => `Añadir estas ${n.toLocaleString('es-ES')}`,
 };

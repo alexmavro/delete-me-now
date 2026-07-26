@@ -4,7 +4,7 @@ import { Translations } from '../../locales';
 import { Modal } from '../ui/Modal';
 import { isSarSupported } from '../../templates';
 import { JURISDICTION_LABELS } from '../../data/jurisdictions';
-import { getSortedCountries } from '../../utils/user-country';
+import { getSortedCountries, LANGUAGES, LANGUAGE_LABEL } from '../../utils/user-country';
 
 const INPUT_CLS =
   'w-full bg-canvas border border-rule-strong px-4 py-3 text-[18px] leading-normal text-ink-primary font-sans focus:border-accent focus:bg-canvas-elevated outline-none transition-colors aria-[invalid=true]:border-critical';
@@ -24,14 +24,6 @@ interface Props {
   t: Translations;
 }
 
-const LANGUAGES: { value: Language; label: string }[] = [
-  { value: 'EN', label: 'English' },
-  { value: 'DE', label: 'Deutsch' },
-  { value: 'FR', label: 'Français' },
-  { value: 'ES', label: 'Español' },
-  { value: 'IT', label: 'Italiano' },
-];
-
 const TEMPLATE_STYLES: { value: TemplateStyle; labelKey: keyof Translations }[] = [
   { value: 'SIMPLE',     labelKey: 'templateSimple' },
   { value: 'LEGAL',      labelKey: 'templateLegal' },
@@ -39,7 +31,6 @@ const TEMPLATE_STYLES: { value: TemplateStyle; labelKey: keyof Translations }[] 
 ];
 
 const JURISDICTIONS = Object.entries(JURISDICTION_LABELS) as [Jurisdiction, string][];
-const LANGUAGE_LABEL: Record<Language, string> = Object.fromEntries(LANGUAGES.map((l) => [l.value, l.label])) as Record<Language, string>;
 
 const SECTION_LABEL_CLS =
   'font-mono text-[14px] uppercase tracking-[0.14em] text-ink-secondary mb-4';

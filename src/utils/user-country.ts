@@ -10,6 +10,20 @@ export const SUPPORTED_COUNTRIES = [
 
 export type SupportedCountry = (typeof SUPPORTED_COUNTRIES)[number];
 
+// Endonyms, not translations — a French speaker looking for German letters
+// scans for "Deutsch", not "allemand".
+export const LANGUAGES: { value: Language; label: string }[] = [
+  { value: 'EN', label: 'English' },
+  { value: 'DE', label: 'Deutsch' },
+  { value: 'FR', label: 'Français' },
+  { value: 'ES', label: 'Español' },
+  { value: 'IT', label: 'Italiano' },
+];
+
+export const LANGUAGE_LABEL: Record<Language, string> = Object.fromEntries(
+  LANGUAGES.map((l) => [l.value, l.label]),
+) as Record<Language, string>;
+
 export function isSupportedCountry(code: unknown): code is SupportedCountry {
   return typeof code === 'string' && (SUPPORTED_COUNTRIES as readonly string[]).includes(code);
 }

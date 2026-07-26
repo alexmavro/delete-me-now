@@ -1,6 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import { Service, ServiceFilter, RequestStatus, ResponseStatus, SmartPackId, EU_REGIONS, Region, StagedEscalation, FacetContact, FacetRisk } from '../types';
-import { SMART_PACKS } from '../data/jurisdictions';
+import { Service, ServiceFilter, RequestStatus, ResponseStatus, EU_REGIONS, Region, StagedEscalation, FacetContact, FacetRisk } from '../types';
 import { storage } from '../utils/storage';
 import { getBestEmail } from '../utils/contacts';
 import { autoAdvanceStatus } from '../utils/request-lifecycle';
@@ -66,7 +65,11 @@ const DEFAULT_FILTER: ServiceFilter = {
   search: '',
   category: 'All',
   region: 'All',
-  breadthMode: 'standard',
+  // Brokers and ad-tech are the point of the tool, and `standard` excludes
+  // both — it hid 1,257 of 3,502 rows, every data broker among them, from the
+  // main list. Writing to a company you have no account with is exactly the
+  // job here, so breadth opens by default.
+  breadthMode: 'speculative',
   jurisdiction: 'All',
   contactAvailability: 'Any',
   confidenceTiers: [],
@@ -107,10 +110,19 @@ const KNOWN_REGIONS: ReadonlySet<string> = new Set([
 // rather than silently emptying the directory.
 function regionMatches(regions: readonly Region[], r: string): boolean {
   if (!KNOWN_REGIONS.has(r)) return true;
+  // A company operating globally is relevant to whichever region you filter
+  // by; excluding it hid Google, Meta and every registry broker from anyone
+  // who narrowed to their own country.
+  if (regions.includes('Global')) return true;
   if (r === 'EU') {
     return regions.includes('EU') || regions.some((rg) => (EU_REGIONS as readonly Region[]).includes(rg));
   }
   return regions.includes(r as Region);
+}
+
+function matchesNameOrBrand(s: Service, needle: string): boolean {
+  if (s.name.toLowerCase().includes(needle)) return true;
+  return (s.alsoKnownAs ?? []).some((b) => b.toLowerCase().includes(needle));
 }
 
 function isSpeculative(s: Service): boolean {
@@ -141,14 +153,21 @@ export function useServices() {
 
   const [filter, setFilterRaw] = useState<ServiceFilter>(DEFAULT_FILTER);
 
+  // Quota exhaustion and Safari private mode both make writes fail. Silently
+  // losing someone's progress is worse than telling them, so the failure is
+  // surfaced and the flag clears again as soon as a write succeeds.
+  const [persistFailed, setPersistFailed] = useState(false);
+
   useEffect(() => {
     if (!loaded) return;
-    storage.set('services', services);
+    setPersistFailed(!storage.set('services', services));
   }, [services, loaded]);
 
   const setFilter = useCallback((updates: Partial<ServiceFilter>) => {
     setFilterRaw((prev) => ({ ...prev, ...updates }));
   }, []);
+
+  const resetFilter = useCallback(() => setFilterRaw(DEFAULT_FILTER), []);
 
   const parsedQuery = useMemo(() => parseQuery(filter.search), [filter.search]);
 
@@ -168,7 +187,7 @@ export function useServices() {
         if (r === 'high' && !high) return false;
         if (r === 'low' && high) return false;
       }
-      if (parsedQuery.text && !s.name.toLowerCase().includes(parsedQuery.text)) return false;
+      if (parsedQuery.text && !matchesNameOrBrand(s, parsedQuery.text)) return false;
       if (filter.jurisdiction !== 'All' && getJurisdiction(s) !== filter.jurisdiction) return false;
       if (!matchesContactFacet(s, filter.contactAvailability)) return false;
       if (filter.confidenceTiers.length > 0 && !filter.confidenceTiers.includes(s.confidence)) return false;
@@ -217,20 +236,8 @@ export function useServices() {
     return added;
   }, []);
 
-  const selectPack = useCallback((packId: SmartPackId) => {
-    const pack = SMART_PACKS.find((p) => p.id === packId);
-    if (!pack) return;
-    setServicesRaw((prev) =>
-      prev.map((s) => (pack.match(s) ? { ...s, selected: true } : s)),
-    );
-  }, []);
-
   const selectByPredicate = useCallback((match: (s: Service) => boolean): void => {
     setServicesRaw((prev) => prev.map((s) => (!s.selected && match(s) ? { ...s, selected: true } : s)));
-  }, []);
-
-  const selectAll = useCallback(() => {
-    setServicesRaw((prev) => prev.map((s) => ({ ...s, selected: true })));
   }, []);
 
   const deselectAll = useCallback(() => {
@@ -479,12 +486,11 @@ export function useServices() {
     services,
     filter,
     setFilter,
+    resetFilter,
     filteredUnselected,
     selected,
     toggle,
-    selectPack,
     selectByPredicate,
-    selectAll,
     selectMany,
     deselectAll,
     addCustom,
@@ -505,5 +511,6 @@ export function useServices() {
     captureResponse,
     stats,
     datasetVerifiedAt,
+    persistFailed,
   };
 }

@@ -1,5 +1,6 @@
 import { ReactNode } from 'react';
 import { Service, ServiceCategory } from '../../types';
+import { Translations } from '../../locales/en';
 import { statusMeta, TONE_DOT } from '../../utils/status-display';
 import { CATEGORY_TOOLTIPS } from '../../utils/category-tooltips';
 
@@ -11,7 +12,12 @@ interface Props {
   // Manage mode: the right-aligned per-row action (Send / Follow up / ...).
   renderAction?: (s: Service) => ReactNode;
   cap?: number;
+  /** Raise the cap. Absent means the cap is a hard ceiling. */
+  onShowMore?: () => void;
+  /** Add every currently-rendered row in one go. */
+  onSelectShown?: () => void;
   empty: ReactNode;
+  t: Translations;
 }
 
 function CategoryChip({ category }: { category?: ServiceCategory }) {
@@ -43,9 +49,12 @@ function Checkbox({ on }: { on: boolean }) {
   );
 }
 
-export function TargetTable({ rows, mode, onToggle, onPreview, renderAction, cap, empty }: Props) {
+export function TargetTable({
+  rows, mode, onToggle, onPreview, renderAction, cap, onShowMore, onSelectShown, empty, t,
+}: Props) {
   const shown = cap ? rows.slice(0, cap) : rows;
   const overflow = cap ? Math.max(0, rows.length - cap) : 0;
+  const selectableShown = shown.filter((s) => !s.selected).length;
 
   if (rows.length === 0) {
     return <div className="px-6 py-16 grid place-items-center text-center">{empty}</div>;
@@ -77,14 +86,29 @@ export function TargetTable({ rows, mode, onToggle, onPreview, renderAction, cap
                     <Checkbox on={s.selected} />
                   </button>
                 </td>
-                <td className="px-4 py-3">
-                  <button type="button" onClick={() => onPreview(s)} className="flex items-center gap-3 text-left group">
+                {/* Definite width so the truncating brand line inside can't
+                    widen the column and push the later columns off-screen. */}
+                <td className="px-4 py-3 max-w-0 w-full">
+                  <button type="button" onClick={() => onPreview(s)} className="flex items-center gap-3 text-left group w-full min-w-0">
                     <span className="w-[26px] h-[26px] rounded-[7px] bg-canvas-sunken border border-rule grid place-items-center text-[12px] font-semibold text-ink-secondary shrink-0">
                       {s.name.charAt(0).toUpperCase()}
                     </span>
                     <span className="min-w-0">
-                      <span className="block text-[14px] font-medium leading-tight group-hover:text-accent transition-colors truncate">{s.name}</span>
-                      {s.url && <span className="block text-[12px] text-ink-tertiary truncate">{s.url.replace(/^https?:\/\//, '')}</span>}
+                      <span className="block text-[14px] font-medium leading-tight group-hover:text-accent transition-colors truncate">
+                        {s.name}
+                        {s.needsIdDocument && (
+                          <span className="ml-2 align-middle text-[10.5px] uppercase tracking-[0.05em] text-ink-tertiary border border-rule-strong rounded px-1 py-px">
+                            {t.needsIdBadge}
+                          </span>
+                        )}
+                      </span>
+                      {s.alsoKnownAs?.length ? (
+                        <span className="block text-[12px] text-ink-tertiary truncate">
+                          {t.brandAliasNote(s.alsoKnownAs.slice(0, 3).join(', '))}
+                        </span>
+                      ) : (
+                        s.url && <span className="block text-[12px] text-ink-tertiary truncate">{s.url.replace(/^https?:\/\//, '')}</span>
+                      )}
                     </span>
                   </button>
                 </td>
@@ -105,10 +129,33 @@ export function TargetTable({ rows, mode, onToggle, onPreview, renderAction, cap
           })}
         </tbody>
       </table>
-      {overflow > 0 && (
-        <p className="px-5 py-4 text-[13px] text-ink-tertiary">
-          {overflow.toLocaleString()} more — refine your search to narrow the list.
-        </p>
+      {(overflow > 0 || onSelectShown) && (
+        <div className="flex flex-wrap items-center gap-3 px-5 py-4 border-t border-rule">
+          {onSelectShown && selectableShown > 0 && (
+            <button
+              type="button"
+              onClick={onSelectShown}
+              className="text-[13px] rounded-[9px] px-3 py-1.5 border border-rule-strong text-ink-secondary hover:border-accent hover:text-accent transition-colors"
+            >
+              {t.tableSelectShown(selectableShown)}
+            </button>
+          )}
+          <div className="flex-1" />
+          {overflow > 0 && (
+            <>
+              <span className="text-[13px] text-ink-tertiary">{t.tableMoreCount(overflow)}</span>
+              {onShowMore && (
+                <button
+                  type="button"
+                  onClick={onShowMore}
+                  className="text-[13px] rounded-[9px] px-3 py-1.5 border border-rule-strong text-ink-secondary hover:border-accent hover:text-accent transition-colors"
+                >
+                  {t.tableShowMore}
+                </button>
+              )}
+            </>
+          )}
+        </div>
       )}
     </div>
   );

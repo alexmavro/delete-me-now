@@ -18,6 +18,8 @@ export interface NavCounts {
 export interface PackLink {
   id: SmartPackId;
   label: string;
+  /** Rows this pack would add right now. Clicking is otherwise a blind commit. */
+  count?: number;
 }
 
 interface Props {
@@ -27,6 +29,7 @@ interface Props {
   intentPacks: PackLink[];
   packs: PackLink[];
   onSelectPack: (id: SmartPackId) => void;
+  onStartWizard: () => void;
   profile: UserProfile;
   onOpenProfile: () => void;
   t: Translations;
@@ -57,7 +60,7 @@ function NavItem({
   );
 }
 
-export function Sidebar({ view, onSetView, counts, intentPacks, packs, onSelectPack, profile, onOpenProfile, t }: Props) {
+export function Sidebar({ view, onSetView, counts, intentPacks, packs, onSelectPack, onStartWizard, profile, onOpenProfile, t }: Props) {
   return (
     <aside className="hidden lg:flex flex-col bg-canvas-elevated border-r border-rule px-3 py-3.5">
       <div className="flex items-center gap-2.5 px-2.5 pt-1 pb-1.5">
@@ -67,7 +70,7 @@ export function Sidebar({ view, onSetView, counts, intentPacks, packs, onSelectP
 
       <button
         type="button"
-        onClick={() => onSetView('all')}
+        onClick={onStartWizard}
         className="flex items-center gap-2 mx-0.5 mt-3 mb-2 px-3 py-2 rounded-lg border border-rule-strong bg-canvas-elevated shadow-sm text-[13px] font-medium hover:border-accent hover:text-accent transition-colors"
       >
         <Icon name="plus" size={15} /> {t.sidebarAddTargets}
@@ -89,7 +92,7 @@ export function Sidebar({ view, onSetView, counts, intentPacks, packs, onSelectP
         <div className="mt-3">
           <div className="px-2.5 pt-2 pb-1 text-[11px] font-semibold uppercase tracking-[0.04em] text-ink-tertiary">{t.sidebarStartHere}</div>
           {intentPacks.map((p) => (
-            <NavItem key={p.id} label={p.label} onClick={() => onSelectPack(p.id)} />
+            <NavItem key={p.id} label={p.label} count={p.count} onClick={() => onSelectPack(p.id)} />
           ))}
         </div>
       )}
@@ -98,7 +101,7 @@ export function Sidebar({ view, onSetView, counts, intentPacks, packs, onSelectP
         <div className="mt-3">
           <div className="px-2.5 pt-2 pb-1 text-[11px] font-semibold uppercase tracking-[0.04em] text-ink-tertiary">{t.sidebarQuickLists}</div>
           {packs.map((p) => (
-            <NavItem key={p.id} label={p.label} onClick={() => onSelectPack(p.id)} />
+            <NavItem key={p.id} label={p.label} count={p.count} onClick={() => onSelectPack(p.id)} />
           ))}
         </div>
       )}

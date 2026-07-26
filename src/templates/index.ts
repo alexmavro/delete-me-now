@@ -1,5 +1,5 @@
 import { UserProfile, GeneratedEmail, TemplateStyle, Jurisdiction, ServiceCategory, Language } from '../types';
-import { generateGdprEmail } from './gdpr';
+import { generateGdprEmail, type ControllerFacts } from './gdpr';
 import { generateCcpaEmail } from './ccpa';
 import { generateUkGdprEmail } from './uk-gdpr';
 import { generateLgpdEmail } from './lgpd';
@@ -8,6 +8,7 @@ import { generateSarEmail } from './sar';
 export { generateFollowUpEmail } from './follow-up';
 export { generateDpaComplaint } from './dpa-complaint';
 export { isSarSupported } from './sar';
+export type { ControllerFacts } from './gdpr';
 
 const SPECULATIVE_CATEGORIES: ServiceCategory[] = ['Data Broker', 'Ad Tech'];
 
@@ -17,6 +18,8 @@ export interface GenerateOptions {
   category?: ServiceCategory;
   /** Override profile.language for controller-jurisdiction routing */
   languageOverride?: Language;
+  /** Drives the Art. 3(2) demands when the controller sits outside the EEA. */
+  controller?: ControllerFacts;
 }
 
 /** Extend UserProfile with internal includeSpeculative flag for templates */
@@ -47,7 +50,7 @@ export function generateEmail(
   }
 
   const generators: Record<Jurisdiction, () => GeneratedEmail> = {
-    GDPR:    () => generateGdprEmail(serviceName, effectiveProfile, style),
+    GDPR:    () => generateGdprEmail(serviceName, effectiveProfile, style, options.controller),
     CCPA:    () => generateCcpaEmail(serviceName, effectiveProfile, style),
     UK_GDPR: () => generateUkGdprEmail(serviceName, effectiveProfile, style),
     LGPD:    () => generateLgpdEmail(serviceName, effectiveProfile, style),

@@ -17,8 +17,9 @@ Data brokers, ad-tech vendors, and scraping bots trade your personal profile eve
 CCPA, and similar laws say you can stop them. They count on the process being too annoying for you to
 bother.
 
-This removes the friction. It matches your details against a directory of ~3,000 known data collectors
-and generates legally grounded deletion requests, ready to send.
+This removes the friction. It matches your details against a directory of ~3,500 known data collectors,
+including every broker on California's statutory register, and generates legally grounded deletion
+requests, ready to send.
 
 ---
 
@@ -30,14 +31,13 @@ Enter your name and email. That's it. Your data stays in your browser and never 
 
 ### Step 2. Pick your targets
 
-Browse the directory or use quick lists:
-- **Standard.** Top verified targets.
-- **Data brokers.** US and global broker list.
-- **EU ad-tech.** GDPR-relevant ad networks.
-- **Social & media.** Major platforms.
+Answer a couple of questions and the tool hands you a scoped list, in chunks, instead of three and a
+half thousand rows. Pick a starting point — money and brokers, your online footprint, credit agencies
+and debt collectors, public bodies, everything — then narrow by category, region, or whether the
+company has a named data protection officer. You see the list and the count before anything is added.
 
-Toggle speculative targets to also write to companies that may hold your data without a direct account
-relationship. Good for data brokers who trade profiles without your knowledge.
+You can still browse the whole directory by hand if you'd rather. Search knows the brands companies
+operate, not just their legal names, so looking up "GMX Mail" finds the entity that answers the letter.
 
 ### Step 3. Send
 
@@ -80,9 +80,11 @@ a browser.
 - **5 languages.** EN, DE, FR, ES, IT for the UI and the email templates.
 - **3 email tones.** Friendly, Legal, Aggressive (for repeat offenders).
 - **Email preview.** See exactly what goes out before opening the draft.
-- **Quick lists.** One-click selection bundles by use case.
+- **Guided list building.** A few questions instead of a wall of companies, with a live count at every step.
+- **Quick lists.** One-click selection bundles by use case, each showing how many it will add.
 - **EU-resident toggle.** Adds enforceable Article 17 language to every request.
-- **Speculative mode.** Includes a shadow-profile clause for data brokers.
+- **Shadow-profile clause.** Letters to data brokers and ad-tech ask them to check for records held
+  about you with no account behind them, which is how brokers hold data in the first place.
 - **Controller-language routing.** A German company gets a German letter, regardless of your UI language.
 - **Cmd/Ctrl+K palette.** Jump to any company, switch theme, edit identity.
 
@@ -105,12 +107,17 @@ a browser.
 git clone https://github.com/alexmavro/delete-me-now
 cd delete-me-now
 npm install
-npm run dev      # local dev server
-npm run build    # production build to dist/
+npm run dev        # local dev server
+npm run build      # production build to dist/
+npm run typecheck  # what CI runs
 ```
 
-Vite + React + TypeScript + Tailwind. The directory is a build-time artifact regenerated from public
-sources via `scripts/`.
+Vite + React + TypeScript + Tailwind. The directory is a build-time artifact: `npm run data:import`
+rebuilds it from public sources. That pulls the Datenanfragen company database automatically; for the
+California broker register, download `complete-reg-data-brokers.csv` from
+[the agency](https://cppa.ca.gov/data_broker_registry/) and save it as `_data_sources/ca-brokers.csv`
+first. If a source file is missing, the import refuses to write rather than quietly shipping a
+directory with hundreds of companies dropped out of it.
 
 ---
 
@@ -120,8 +127,9 @@ This stands on the shoulders of giants:
 
 - **[Datenanfragen.de](https://www.datarequests.org/).** Primary source for EU/GDPR contacts (CC0
   License). Grüße nach Deutschland 🇩🇪
-- **California Data Broker Registry.** US broker data.
-- **SimpleOptOut / PrivacySpy.** Additional community lists.
+- **[California Data Broker Registry](https://cppa.ca.gov/data_broker_registry/).** Every broker
+  trading in California has to register by law, so this is the closest thing to a complete list
+  anywhere. Public record, published by the California Privacy Protection Agency.
 
 ---
 
@@ -130,5 +138,9 @@ This stands on the shoulders of giants:
 This generates template text based on standard regulations. I am a girl with a bone to pick with Big
 Tech, not a lawyer. The templates are a starting point. You're responsible for what you send.
 
-Don't blast small businesses who clearly don't have your data. The speculative mode exists for data
-brokers, not your local bakery.
+Don't blast small businesses who clearly don't have your data.
+also... the speculative mode exists for data brokers, not your local businesses. Those requests are a pain to fulfil as a small business owner because you rarely get them and you have to have a good database to do it fast, most don't.
+
+It is obviously still your right to request deletion, I am just saying to do it responsibly.
+
+(on a personal note, this is one of the first things I ever built and I did a lot by hand before I debugged it with ai help recently, which made the dashboard usable, but it shows typical baby-elements, so don't be mean.)

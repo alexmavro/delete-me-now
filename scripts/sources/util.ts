@@ -30,4 +30,13 @@ export interface ExternalBroker {
   source: 'ca-broker-registry' | 'vt-broker-registry' | 'eu-brokers' | 'prc-brokers';
   headquarterCountry: string;
   externalId?: string;
+  /**
+   * The request route the broker itself filed with the regulator. Quoting a
+   * company's own statutory declaration back at it closes off the two replies
+   * brokers lean on: that they hold nothing, and that no route exists.
+   */
+  declaredRequestRoute?: string;
+  /** Registry the declaration was filed with, for citing it in a letter. */
+  registryName?: string;
+  registeredSince?: string;
 }

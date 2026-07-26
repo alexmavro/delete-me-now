@@ -3,42 +3,36 @@
  * A single Datenanfragen tag can map to multiple of our categories.
  */
 
+// One upstream tag, one category. Earlier revisions folded distinct tags
+// together — `political party` and `public body` both became `Government`,
+// `church` and `nonprofit` both became `Other` — which buried a quarter of
+// the directory in a bucket nobody can act on and merged bodies that answer
+// an erasure request very differently. Multi-category entries survive only
+// where both labels are substantively true: a credit agency really is a data
+// broker, because it profiles people who never signed up with it.
+//
+// The tag vocabulary is Datenanfragen's and is small (18 values in the
+// current snapshot). Only tags that actually occur are listed; a tag with no
+// entry here falls through to 'Uncategorised' rather than being invented.
 export const CATEGORY_MAP: Record<string, string[]> = {
-  // Datenanfragen uses space-separated tags, not underscores
-  // Include both forms for safety
-  'address_dealer': ['Data Broker'],
   'addresses': ['Data Broker'],
-  'credit_agency': ['Finance', 'Data Broker'],
-  'credit agency': ['Finance', 'Data Broker'],
+  'credit agency': ['Credit Agency', 'Data Broker'],
+  'collection agency': ['Debt Collection'],
   'commerce': ['Shopping'],
   'finance': ['Finance'],
   'insurance': ['Insurance'],
-  'social_media': ['Social'],
   'social media': ['Social'],
   'telecommunication': ['Telecom'],
   'utility': ['Utility'],
-  'mobility': ['Travel'],
   'travel': ['Travel'],
   'entertainment': ['Entertainment'],
-  'tech': ['Cloud & Hosting'],
-  'education': ['Education'],
   'school': ['Education'],
-  'public_body': ['Government'],
-  'public body': ['Government'],
-  'tracking': ['Ad Tech'],
+  'public body': ['Public Body'],
+  'political party': ['Political Party'],
+  'church': ['Religious'],
+  'nonprofit': ['Nonprofit'],
   'ads': ['Ad Tech'],
   'health': ['Health'],
-
-  // Less common tags
-  'collection_agency': ['Finance'],
-  'collection agency': ['Finance'],
-  'consulting': ['Other'],
-  'church': ['Other'],
-  'political_party': ['Government'],
-  'political party': ['Government'],
-  'nonprofit': ['Other'],
-  'newspaper': ['News & Media'],
-  'broker': ['Data Broker'],
 };
 
 /**
@@ -52,6 +46,6 @@ export function mapCategories(datenanfragenCategories: string[]): string[] {
       for (const c of mapped) result.add(c);
     }
   }
-  if (result.size === 0) result.add('Other');
+  if (result.size === 0) result.add('Uncategorised');
   return [...result];
 }

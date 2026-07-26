@@ -10,6 +10,7 @@ import { buildMailtoUrl } from './utils/email';
 import { getDpaForCountry } from './data/dpa';
 import { controllerLanguage } from './utils/controller-language';
 import { dpaLanguage } from './utils/dpa-language';
+import { isEeaCountry, controllerFacts } from './utils/derive-jurisdiction';
 import { SMART_PACKS, INTENT_PACKS } from './data/jurisdictions';
 import { LANG_TO_BCP47 } from './utils/user-country';
 
@@ -25,6 +26,7 @@ import { MobileDrawer } from './components/workspace/MobileDrawer';
 import { EscalateBanner } from './components/workspace/EscalateBanner';
 import { ResponseCaptureModal } from './components/workspace/ResponseCaptureModal';
 import { AttestationBar } from './components/workspace/AttestationBar';
+import { SelectionWizard } from './components/workspace/SelectionWizard';
 import { Icon } from './components/ui/Icon';
 import { storage } from './utils/storage';
 
@@ -39,8 +41,10 @@ const VIEW_TITLE_KEY: Record<View, keyof import('./locales/en').Translations> = 
 const SENT_SET = [RequestStatus.SENT, RequestStatus.FOLLOW_UP_SENT];
 const ATTENTION_SET = [RequestStatus.IGNORED, RequestStatus.ESCALATION_READY, RequestStatus.ESCALATED];
 
-const INTENT_PACK_LINKS = INTENT_PACKS.map((p) => ({ id: p.id, label: p.label }));
-const PACK_LINKS = SMART_PACKS.slice(0, 4).map((p) => ({ id: p.id, label: p.label }));
+const INTENT_PACK_IDS = INTENT_PACKS.map((p) => p.id);
+const PACK_IDS = SMART_PACKS.map((p) => p.id);
+
+const BROWSE_PAGE = 200;
 
 export default function App() {
   const { profile, setProfile, setCountry, isValid } = useProfile();
@@ -59,6 +63,11 @@ export default function App() {
   } | null>(null);
   const [respondingTo, setRespondingTo] = useState<Service | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [wizardOpen, setWizardOpen] = useState(false);
+  const [addedNotice, setAddedNotice] = useState<number | null>(null);
+  // How many browse rows are rendered. Raised by "show more" rather than
+  // being a fixed ceiling with no way past it.
+  const [browseCap, setBrowseCap] = useState(BROWSE_PAGE);
 
   useEffect(() => {
     document.documentElement.lang = LANG_TO_BCP47[profile.language] ?? 'en';
@@ -90,7 +99,11 @@ export default function App() {
 
   const getServiceEmail = useCallback((s: Service) => {
     const lang = controllerLanguage(s.headquarterCountry, profile.language, !!profile.alwaysWriteInMyLanguage);
-    return generateEmail(s.name, profile, { category: s.categories[0], languageOverride: lang });
+    return generateEmail(s.name, profile, {
+      category: s.categories[0],
+      languageOverride: lang,
+      controller: controllerFacts(s),
+    });
   }, [profile]);
 
   const getFollowUpServiceEmail = useCallback((s: Service) => {
@@ -119,7 +132,18 @@ export default function App() {
   }, [isValid, dispatch]);
 
   const handleEscalate = useCallback((s: Service) => {
-    const dpa = s.headquarterCountry ? getDpaForCountry(s.headquarterCountry) : undefined;
+    // A controller with no EU establishment falls outside the one-stop-shop,
+    // so under Art. 77 the competent authority is the complainant's own — not
+    // the regulator where the company happens to be filed. Without this, a
+    // German user chasing a Californian broker was sent to the CPPA, which
+    // has no power over their GDPR rights.
+    const invokingEuLaw = profile.jurisdiction === 'GDPR' || profile.jurisdiction === 'UK_GDPR';
+    const controllerNotEeaEstablished = !isEeaCountry(s.headquarterCountry);
+    const ownDpa =
+      invokingEuLaw && controllerNotEeaEstablished && profile.country
+        ? getDpaForCountry(profile.country)
+        : undefined;
+    const dpa = ownDpa ?? (s.headquarterCountry ? getDpaForCountry(s.headquarterCountry) : undefined);
     const complaint = generateDpaComplaint({
       companyName: s.name, fullName: profile.fullName, email: profile.email,
       originalDate: s.lastContacted || new Date().toISOString(), jurisdiction: profile.jurisdiction,
@@ -189,7 +213,12 @@ export default function App() {
   };
 
   const q = services.filter.search.trim().toLowerCase();
-  const matchName = (s: Service) => !q || s.name.toLowerCase().includes(q);
+  // Same name-or-brand rule browse uses, so a company you found by its brand
+  // is still findable by that brand once it's on your list.
+  const matchName = (s: Service) =>
+    !q ||
+    s.name.toLowerCase().includes(q) ||
+    (s.alsoKnownAs ?? []).some((b) => b.toLowerCase().includes(q));
 
   const manageRows = useMemo(() => {
     let rows = services.selected;
@@ -204,6 +233,18 @@ export default function App() {
     if (pack) services.selectByPredicate(pack.match);
     setView('overview');
   }, [services]);
+
+  const { selectMany, filteredUnselected } = services;
+  const handleSelectShown = useCallback(() => {
+    const added = selectMany(filteredUnselected.slice(0, browseCap).map((s) => s.id));
+    setAddedNotice(added);
+  }, [selectMany, filteredUnselected, browseCap]);
+
+  // A stale cap would keep showing 600 rows after the user narrows the search
+  // to twelve, so every filter change starts the count over.
+  useEffect(() => {
+    setBrowseCap(BROWSE_PAGE);
+  }, [services.filter]);
 
   const rowAction = (s: Service) => {
     const cls = 'inline-flex items-center gap-1 text-[13px] rounded-[7px] px-3 py-1.5 border border-rule-strong text-ink-secondary hover:border-accent hover:text-accent transition-colors';
@@ -228,6 +269,21 @@ export default function App() {
     }
   };
 
+  // Counted over unselected rows so the number is what the pack would add,
+  // not how many exist. Recomputed only when the service list itself changes.
+  const packLinks = useMemo(() => {
+    const build = (ids: SmartPackId[]) =>
+      ids.map((id) => {
+        const pack = [...INTENT_PACKS, ...SMART_PACKS].find((x) => x.id === id);
+        return {
+          id,
+          label: t.packCopy[id].label,
+          count: pack ? services.services.filter((s) => !s.selected && pack.match(s)).length : 0,
+        };
+      });
+    return { intent: build(INTENT_PACK_IDS), smart: build(PACK_IDS) };
+  }, [services.services, t]);
+
   const counts = {
     total: services.services.length,
     selected: services.selected.length,
@@ -243,7 +299,8 @@ export default function App() {
     <div className="h-screen grid grid-cols-1 lg:grid-cols-[252px_1fr] bg-canvas text-ink-primary overflow-hidden">
       <Sidebar
         view={view} onSetView={setView} counts={counts}
-        intentPacks={INTENT_PACK_LINKS} packs={PACK_LINKS} onSelectPack={handleSelectPack}
+        intentPacks={packLinks.intent} packs={packLinks.smart} onSelectPack={handleSelectPack}
+        onStartWizard={() => setWizardOpen(true)}
         profile={profile} onOpenProfile={() => setProfileOpen(true)}
         t={t}
       />
@@ -267,6 +324,7 @@ export default function App() {
               value={services.filter.search}
               onChange={(e) => services.setFilter({ search: e.target.value })}
               placeholder={t.searchPlaceholder}
+              title={t.searchSyntaxHint}
               className="flex-1 bg-transparent outline-none text-[13.5px] min-w-0"
               aria-label="Search companies"
             />
@@ -279,6 +337,31 @@ export default function App() {
             <Icon name={theme === 'dark' ? 'sun' : 'moon'} size={16} />
           </button>
         </header>
+
+        {services.persistFailed && (
+          <div
+            role="alert"
+            className="px-5 md:px-7 py-2.5 bg-critical-wash border-b border-rule text-[13.5px] text-critical"
+          >
+            {t.storageFailed}
+          </div>
+        )}
+
+        {addedNotice !== null && (
+          <div
+            role="status"
+            className="flex items-center gap-3 px-5 md:px-7 py-2.5 bg-accent-soft border-b border-rule text-[13.5px] text-accent"
+          >
+            <span>{t.wizardAdded(addedNotice)}</span>
+            <button
+              type="button"
+              onClick={() => setAddedNotice(null)}
+              className="ml-auto text-ink-tertiary hover:text-ink-primary"
+            >
+              {t.dispatchErrorDismiss}
+            </button>
+          </div>
+        )}
 
         <div className="flex-1 overflow-y-auto px-5 md:px-7 py-6">
           {view === 'overview' && <Overview stats={overviewStats} t={t} />}
@@ -320,7 +403,10 @@ export default function App() {
             <TargetTable
               rows={rows}
               mode={browse ? 'browse' : 'manage'}
-              cap={browse ? 200 : undefined}
+              cap={browse ? browseCap : undefined}
+              onShowMore={browse ? () => setBrowseCap((c) => c + BROWSE_PAGE) : undefined}
+              onSelectShown={browse ? handleSelectShown : undefined}
+              t={t}
               onToggle={services.toggle}
               onPreview={setPreview}
               renderAction={browse ? undefined : rowAction}
@@ -347,11 +433,30 @@ export default function App() {
       <MobileDrawer
         isOpen={drawerOpen} onClose={() => setDrawerOpen(false)}
         view={view} onSetView={setView} counts={counts}
-        intentPacks={INTENT_PACK_LINKS} packs={PACK_LINKS} onSelectPack={handleSelectPack}
+        intentPacks={packLinks.intent} packs={packLinks.smart} onSelectPack={handleSelectPack}
+        onStartWizard={() => { setDrawerOpen(false); setWizardOpen(true); }}
         profile={profile} onOpenProfile={() => setProfileOpen(true)}
         t={t}
       />
       <WelcomeModal isOpen={welcomeOpen} onClose={closeWelcome} />
+      <SelectionWizard
+        isOpen={wizardOpen}
+        onClose={() => setWizardOpen(false)}
+        services={services.services}
+        filter={services.filter}
+        setFilter={services.setFilter}
+        resetFilter={services.resetFilter}
+        candidates={services.filteredUnselected}
+        selectMany={services.selectMany}
+        profile={profile}
+        setCountry={setCountry}
+        onDone={(added) => {
+          setWizardOpen(false);
+          setAddedNotice(added);
+          setView('overview');
+        }}
+        t={t}
+      />
       <ProfilePanel isOpen={profileOpen} onClose={() => setProfileOpen(false)} profile={profile} setProfile={setProfile} setCountry={setCountry} t={t} />
       <LetterPreview service={preview} profile={profile} onClose={() => setPreview(null)} onSend={handleSend} t={t} />
       <ResponseCaptureModal isOpen={!!respondingTo} service={respondingTo} onClose={() => setRespondingTo(null)} onSubmit={handleSaveResponse} t={t} />

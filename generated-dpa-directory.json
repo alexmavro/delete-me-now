@@ -58,7 +58,7 @@
   "AT": {
     "name": "DSB",
     "country": "AT",
-    "complaintUrl": "https://www.dsb.gv.at/beantragen-melden/beschwerde-beantragen",
+    "complaintUrl": "https://www.dsb.gv.at/ueber-die-website/barrierefreiheitserklaerung.html",
     "languages": [
       "DE",
       "EN"
@@ -287,24 +287,6 @@
     "complaintUrl": "https://www.datatilsynet.no/en/about-us/contact-us/",
     "languages": [
       "NO",
-      "EN"
-    ]
-  },
-  "IS": {
-    "name": "Persónuvernd",
-    "country": "IS",
-    "complaintUrl": "https://www.personuvernd.is/einstaklingar/kvartanir/",
-    "languages": [
-      "IS",
-      "EN"
-    ]
-  },
-  "LI": {
-    "name": "Datenschutzstelle",
-    "country": "LI",
-    "complaintUrl": "https://www.datenschutzstelle.li/beschwerde",
-    "languages": [
-      "DE",
       "EN"
     ]
   }

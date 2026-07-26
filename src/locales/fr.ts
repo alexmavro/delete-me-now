@@ -1,4 +1,5 @@
 import { Translations } from './en';
+import { SmartPackId } from '../types';
 
 export const fr: Translations = {
   appName: 'Delete Me Now',
@@ -193,4 +194,61 @@ export const fr: Translations = {
   dispatchErrorOpening: "Impossible d'ouvrir le message",
   dispatchErrorPackaging: "Impossible d'emballer le lot",
   dispatchErrorSaving: "Impossible d'enregistrer le fichier",
+
+  packCopy: {
+    'standard': { label: 'Contacts confirmés', body: 'Toute entreprise dont l\'adresse a été confirmée auprès d\'une source publiée, ou prouvée par une demande réellement traitée. Exclut les adresses extraites automatiquement et jamais vérifiées.' },
+    'data-brokers': { label: 'Courtiers en données', body: 'Des entreprises qui collectent et revendent vos informations sans avoir jamais traité avec vous. Inclut tout le registre californien, obligatoire pour les courtiers qui y opèrent.' },
+    'eu-brokers': { label: 'Courtiers européens', body: 'Marchands d\'adresses et agences de notation européens qui profilent des gens qui ne se sont jamais inscrits chez eux — Schober, Acxiom, CRIF, Bisnode, Deutsche Post Direkt et consorts.' },
+    'eu-adtech': { label: 'Publicité en ligne (UE)', body: 'Les entreprises publicitaires actives en Europe qui vous suivent d\'un site à l\'autre pour construire un profil de ciblage.' },
+    'social-media': { label: 'Réseaux sociaux', body: 'Les plateformes qui détiennent vos publications, vos messages, vos contacts et le comportement qu\'elles en déduisent.' },
+    'telecom': { label: 'Téléphone & internet', body: 'Opérateurs et fournisseurs d\'accès. Ils détiennent les relevés d\'appels, l\'historique de localisation et, dans certains pays, votre navigation.' },
+    'credit-debt': { label: 'Crédit & recouvrement', body: 'Les agences de notation vous évaluent pour les prêteurs, bailleurs et employeurs à partir de données que vous ne leur avez jamais données. Les sociétés de recouvrement détiennent des historiques de paiement rachetés ailleurs.' },
+    'public-body': { label: 'Administrations', body: 'Administrations, tribunaux et collectivités. Une grande partie de ce qu\'ils détiennent relève d\'une obligation légale de conservation : l\'effacement est souvent refusé, demander ce qu\'ils ont va plus loin.' },
+    'health-insurance': { label: 'Santé & assurance', body: 'Médecins, pharmacies, applis santé et assureurs. La catégorie la plus sensible, et la mieux protégée par la loi.' },
+    'finance-exposure': { label: 'Argent & courtiers', body: 'Tous ceux qui détiennent ou monnaient votre vie financière : banques, assureurs, agences de notation, sociétés de recouvrement et courtiers en données.' },
+    'online-footprint': { label: 'Empreinte en ligne', body: 'La trace que vous laissez simplement en existant en ligne — plateformes sociales, traceurs publicitaires et services de divertissement qui notent ce que vous regardez.' },
+    'full-cleanup': { label: 'Tout', body: 'Toutes les entreprises du répertoire. Le filet le plus large possible, et beaucoup de courriers.' },
+  } as Record<SmartPackId, { label: string; body: string }>,
+
+  wizardTitle: 'Composer votre liste',
+  wizardStepOf: (n: number, total: number) => `Étape ${n} sur ${total}`,
+  wizardBack: 'Retour',
+  wizardNext: 'Suivant',
+  wizardCancel: 'Annuler',
+  wizardCountryTitle: 'Où êtes-vous ?',
+  wizardCountryBody:
+    "Cela détermine le droit sous lequel vous écrivez, la langue des courriers et l'autorité à laquelle vous pouvez vous adresser.",
+  wizardGoalTitle: 'Que voulez-vous nettoyer ?',
+  wizardGoalBody:
+    "Choisissez un point de départ. Vous pourrez affiner ensuite, et rien n'est envoyé avant votre relecture.",
+  wizardGoalCount: (n: number) => `${n.toLocaleString('fr-FR')} entreprises`,
+  wizardRefineTitle: 'Affiner',
+  wizardRefineBody:
+    'Tout est facultatif. Si la liste vous convient déjà, passez directement à la relecture.',
+  wizardRefineCategory: 'Catégorie',
+  wizardRefineRegion: 'Région',
+  wizardRefineAny: 'Indifférent',
+  wizardRefineDpoOnly: 'Uniquement les entreprises avec un délégué à la protection des données',
+  wizardRefineDpoNote: 'Elles répondent généralement de façon plus fiable.',
+  wizardRefineVerifiedOnly: 'Uniquement les adresses de contact confirmées',
+  wizardRefineVerifiedNote:
+    "Écarte les adresses extraites automatiquement et jamais vérifiées.",
+  wizardReviewTitle: 'Relire votre liste',
+  wizardReviewEmpty: 'Rien ne correspond. Revenez en arrière et élargissez.',
+  wizardReviewSample: "Un aperçu de ce que vous allez ajouter :",
+  wizardReviewMore: (n: number) => `et ${n.toLocaleString('fr-FR')} autres`,
+  wizardCommit: (n: number) => `Ajouter ${n.toLocaleString('fr-FR')} à ma liste`,
+  wizardAdded: (n: number) => `${n.toLocaleString('fr-FR')} entreprises ajoutées à votre liste.`,
+  wizardPublicBodyWarning:
+    "Les administrations conservent le plus souvent des dossiers qu'elles ont l'obligation légale de garder : un effacement est donc fréquemment refusé. Demander ce qu'elles détiennent va généralement plus loin — vous pouvez basculer sur une demande d'accès dans votre profil.",
+  wizardIdWarning: (n: number) =>
+    `${n} d'entre elles demanderont une preuve d'identité avant d'agir.`,
+
+  searchSyntaxHint: 'Astuces : cat:finance · region:DE · risk:high',
+  brandAliasNote: (brands: string) => `Exploite aussi ${brands}`,
+  needsIdBadge: "Demande une pièce d'identité",
+  storageFailed: "Votre progression n'a pas pu être enregistrée. Le stockage du navigateur est plein ou bloqué (la navigation privée fait cela) — la liste à l'écran fonctionne toujours, mais elle disparaîtra à la fermeture de l'onglet.",
+  tableShowMore: 'Afficher plus',
+  tableMoreCount: (n: number) => `${n.toLocaleString('fr-FR')} de plus`,
+  tableSelectShown: (n: number) => `Ajouter ces ${n.toLocaleString('fr-FR')}`,
 };

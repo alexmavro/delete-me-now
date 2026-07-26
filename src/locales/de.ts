@@ -1,4 +1,5 @@
 import { Translations } from './en';
+import { SmartPackId } from '../types';
 
 export const de: Translations = {
   appName: 'Delete Me Now',
@@ -193,4 +194,61 @@ export const de: Translations = {
   dispatchErrorOpening: 'Konnte die Nachricht nicht öffnen',
   dispatchErrorPackaging: 'Konnte das Paket nicht packen',
   dispatchErrorSaving: 'Konnte die Datei nicht speichern',
+
+  packCopy: {
+    'standard': { label: 'Bestätigte Kontakte', body: 'Jedes Unternehmen, dessen Adresse gegen eine veröffentlichte Quelle bestätigt oder durch eine tatsächlich beantwortete Anfrage belegt wurde. Automatisch ausgelesene, nie geprüfte Adressen bleiben außen vor.' },
+    'data-brokers': { label: 'Datenhändler', body: 'Unternehmen, die deine Daten sammeln und verkaufen, ohne je direkt mit dir zu tun gehabt zu haben. Enthält das gesamte kalifornische Register, in das sich dort tätige Händler gesetzlich eintragen müssen.' },
+    'eu-brokers': { label: 'EU-Datenhändler', body: 'Europäische Adresshändler und Auskunfteien, die Profile über Menschen anlegen, die nie bei ihnen Kunde waren — Schober, Acxiom, CRIF, Bisnode, Deutsche Post Direkt und ähnliche.' },
+    'eu-adtech': { label: 'EU-Werbetechnik', body: 'Werbeunternehmen in Europa, die dich zwischen Webseiten verfolgen, um ein Profil für Zielgruppen zu bauen.' },
+    'social-media': { label: 'Soziale Netzwerke', body: 'Plattformen mit deinen Beiträgen, Nachrichten, Kontakten und dem Verhalten, das sie daraus ableiten.' },
+    'telecom': { label: 'Telefon & Internet', body: 'Mobilfunk- und Internetanbieter. Sie haben Verbindungsdaten, Standortverläufe und in manchen Ländern deinen Browserverlauf.' },
+    'credit-debt': { label: 'Auskunfteien & Inkasso', body: 'Auskunfteien bewerten dich für Banken, Vermieter und Arbeitgeber mit Daten, die du ihnen nie gegeben hast. Inkassofirmen halten Zahlungshistorien, die sie von anderen gekauft haben.' },
+    'public-body': { label: 'Behörden', body: 'Ämter, Gerichte und Kommunen. Vieles davon unterliegt einer gesetzlichen Aufbewahrungspflicht, eine Löschung wird deshalb oft abgelehnt — eine Auskunft bringt meist mehr.' },
+    'health-insurance': { label: 'Gesundheit & Versicherung', body: 'Ärzte, Apotheken, Gesundheits-Apps und Versicherer. Die sensibelste Kategorie, und die vom Gesetz am stärksten geschützte.' },
+    'finance-exposure': { label: 'Geld & Datenhändler', body: 'Alle, die dein finanzielles Leben halten oder damit handeln: Banken, Versicherer, Auskunfteien, Inkasso und Datenhändler.' },
+    'online-footprint': { label: 'Digitale Spuren', body: 'Die Spur, die du online einfach durch Dasein hinterlässt — soziale Plattformen, Werbetracker und Unterhaltungsdienste, die mitschreiben, was du schaust.' },
+    'full-cleanup': { label: 'Alles', body: 'Jedes Unternehmen im Verzeichnis. Das größtmögliche Netz, und eine Menge Briefe.' },
+  } as Record<SmartPackId, { label: string; body: string }>,
+
+  wizardTitle: 'Liste zusammenstellen',
+  wizardStepOf: (n: number, total: number) => `Schritt ${n} von ${total}`,
+  wizardBack: 'Zurück',
+  wizardNext: 'Weiter',
+  wizardCancel: 'Abbrechen',
+  wizardCountryTitle: 'Wo bist du?',
+  wizardCountryBody:
+    'Das legt fest, nach welchem Recht du schreibst, in welcher Sprache die Briefe rausgehen und an welche Aufsichtsbehörde du dich wenden kannst.',
+  wizardGoalTitle: 'Was möchtest du aufräumen?',
+  wizardGoalBody:
+    'Wähle einen Startpunkt. Du kannst danach eingrenzen, und es wird nichts verschickt, bevor du es geprüft hast.',
+  wizardGoalCount: (n: number) => `${n.toLocaleString('de-DE')} Unternehmen`,
+  wizardRefineTitle: 'Eingrenzen',
+  wizardRefineBody:
+    'Alles optional. Wenn die Liste schon passt, geh direkt zur Prüfung.',
+  wizardRefineCategory: 'Kategorie',
+  wizardRefineRegion: 'Region',
+  wizardRefineAny: 'Beliebig',
+  wizardRefineDpoOnly: 'Nur Unternehmen mit benanntem Datenschutzbeauftragten',
+  wizardRefineDpoNote: 'Diese antworten erfahrungsgemäß zuverlässiger.',
+  wizardRefineVerifiedOnly: 'Nur bestätigte Kontaktadressen',
+  wizardRefineVerifiedNote:
+    'Lässt Adressen weg, die automatisch ausgelesen und nie geprüft wurden.',
+  wizardReviewTitle: 'Liste prüfen',
+  wizardReviewEmpty: 'Dazu passt nichts. Geh zurück und mach die Auswahl breiter.',
+  wizardReviewSample: 'Eine Auswahl dessen, was du gleich hinzufügst:',
+  wizardReviewMore: (n: number) => `und ${n.toLocaleString('de-DE')} weitere`,
+  wizardCommit: (n: number) => `${n.toLocaleString('de-DE')} zur Liste hinzufügen`,
+  wizardAdded: (n: number) => `${n.toLocaleString('de-DE')} Unternehmen hinzugefügt.`,
+  wizardPublicBodyWarning:
+    'Behörden führen meist Unterlagen, zu deren Aufbewahrung sie gesetzlich verpflichtet sind — eine Löschung wird deshalb oft abgelehnt. Eine Auskunft darüber, was sie gespeichert haben, bringt in der Regel mehr; im Profil kannst du auf Auskunftsersuchen umstellen.',
+  wizardIdWarning: (n: number) =>
+    `${n} davon verlangen einen Identitätsnachweis, bevor sie tätig werden.`,
+
+  searchSyntaxHint: 'Tipps: cat:finance · region:DE · risk:high',
+  brandAliasNote: (brands: string) => `Betreibt außerdem ${brands}`,
+  needsIdBadge: 'Verlangt Ausweis',
+  storageFailed: 'Dein Fortschritt konnte nicht gespeichert werden. Der Browser-Speicher ist voll oder blockiert (im privaten Modus ist das normal) — die Liste auf dem Bildschirm funktioniert weiter, ist aber weg, sobald du den Tab schließt.',
+  tableShowMore: 'Mehr anzeigen',
+  tableMoreCount: (n: number) => `${n.toLocaleString('de-DE')} weitere`,
+  tableSelectShown: (n: number) => `Diese ${n.toLocaleString('de-DE')} hinzufügen`,
 };

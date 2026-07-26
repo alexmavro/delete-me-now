@@ -1,4 +1,5 @@
 import { Translations } from './en';
+import { SmartPackId } from '../types';
 
 export const it: Translations = {
   appName: 'Delete Me Now',
@@ -193,4 +194,61 @@ export const it: Translations = {
   dispatchErrorOpening: 'Non è stato possibile aprire il messaggio',
   dispatchErrorPackaging: 'Non è stato possibile impacchettare il lotto',
   dispatchErrorSaving: 'Non è stato possibile salvare il file',
+
+  packCopy: {
+    'standard': { label: 'Contatti confermati', body: 'Ogni azienda il cui indirizzo è stato confermato su una fonte pubblicata, o dimostrato da una richiesta davvero evasa. Esclude gli indirizzi estratti automaticamente e mai verificati.' },
+    'data-brokers': { label: 'Intermediari di dati', body: 'Aziende che raccolgono e rivendono le tue informazioni senza aver mai avuto a che fare con te. Include l\'intero registro della California, obbligatorio per gli intermediari che vi operano.' },
+    'eu-brokers': { label: 'Intermediari europei', body: 'Venditori di indirizzi e agenzie di credito europee che profilano persone che non si sono mai registrate da loro — Schober, Acxiom, CRIF, Bisnode, Deutsche Post Direkt e simili.' },
+    'eu-adtech': { label: 'Pubblicità online (UE)', body: 'Aziende pubblicitarie attive in Europa che ti seguono tra i siti per costruire un profilo di targeting.' },
+    'social-media': { label: 'Social network', body: 'Piattaforme che conservano i tuoi post, messaggi, contatti e il comportamento che ne deducono.' },
+    'telecom': { label: 'Telefono e internet', body: 'Operatori e provider. Hanno tabulati, cronologia degli spostamenti e, in alcuni paesi, cosa hai navigato.' },
+    'credit-debt': { label: 'Credito e recupero', body: 'Le agenzie di credito ti valutano per banche, proprietari e datori di lavoro usando dati che non hai mai dato loro. Le società di recupero conservano storici di pagamento comprati da altri.' },
+    'public-body': { label: 'Enti pubblici', body: 'Amministrazioni, tribunali e comuni. Molto di ciò che detengono risponde a un obbligo di legge, quindi la cancellazione viene spesso respinta: chiedere cosa hanno porta più lontano.' },
+    'health-insurance': { label: 'Salute e assicurazioni', body: 'Medici, farmacie, app sanitarie e assicuratori. La categoria più delicata, e quella più tutelata dalla legge.' },
+    'finance-exposure': { label: 'Denaro e intermediari', body: 'Tutti quelli che detengono o commerciano la tua vita finanziaria: banche, assicuratori, agenzie di credito, società di recupero e intermediari di dati.' },
+    'online-footprint': { label: 'Impronta online', body: 'La scia che lasci semplicemente esistendo online — piattaforme social, tracker pubblicitari e servizi di intrattenimento che annotano cosa guardi.' },
+    'full-cleanup': { label: 'Tutto', body: 'Ogni azienda nell\'elenco. La rete più ampia possibile, e parecchie lettere.' },
+  } as Record<SmartPackId, { label: string; body: string }>,
+
+  wizardTitle: 'Costruisci la tua lista',
+  wizardStepOf: (n: number, total: number) => `Passo ${n} di ${total}`,
+  wizardBack: 'Indietro',
+  wizardNext: 'Avanti',
+  wizardCancel: 'Annulla',
+  wizardCountryTitle: 'Dove ti trovi?',
+  wizardCountryBody:
+    'Determina in base a quale legge scrivi, in che lingua partono le lettere e a quale autorità puoi rivolgerti.',
+  wizardGoalTitle: 'Che cosa vuoi ripulire?',
+  wizardGoalBody:
+    'Scegli un punto di partenza. Potrai restringere dopo, e non viene inviato nulla prima che tu lo controlli.',
+  wizardGoalCount: (n: number) => `${n.toLocaleString('it-IT')} aziende`,
+  wizardRefineTitle: 'Restringi',
+  wizardRefineBody:
+    'Tutto facoltativo. Se la lista va già bene, passa direttamente al controllo.',
+  wizardRefineCategory: 'Categoria',
+  wizardRefineRegion: 'Regione',
+  wizardRefineAny: 'Qualsiasi',
+  wizardRefineDpoOnly: 'Solo aziende con un responsabile della protezione dei dati',
+  wizardRefineDpoNote: 'Di norma rispondono in modo più affidabile.',
+  wizardRefineVerifiedOnly: 'Solo indirizzi di contatto confermati',
+  wizardRefineVerifiedNote:
+    'Esclude gli indirizzi estratti automaticamente e mai verificati.',
+  wizardReviewTitle: 'Controlla la tua lista',
+  wizardReviewEmpty: 'Nessuna corrispondenza. Torna indietro e allarga la selezione.',
+  wizardReviewSample: 'Un campione di ciò che stai per aggiungere:',
+  wizardReviewMore: (n: number) => `e altre ${n.toLocaleString('it-IT')}`,
+  wizardCommit: (n: number) => `Aggiungi ${n.toLocaleString('it-IT')} alla mia lista`,
+  wizardAdded: (n: number) => `${n.toLocaleString('it-IT')} aziende aggiunte alla tua lista.`,
+  wizardPublicBodyWarning:
+    'Gli enti pubblici conservano di solito documenti che la legge impone loro di tenere, quindi la cancellazione viene spesso respinta. Chiedere che cosa detengono porta in genere più lontano: puoi passare a una richiesta di accesso nel tuo profilo.',
+  wizardIdWarning: (n: number) =>
+    `${n} di queste chiederanno una prova di identità prima di agire.`,
+
+  searchSyntaxHint: 'Suggerimenti: cat:finance · region:DE · risk:high',
+  brandAliasNote: (brands: string) => `Gestisce anche ${brands}`,
+  needsIdBadge: 'Chiede un documento',
+  storageFailed: 'Non è stato possibile salvare i tuoi progressi. La memoria del browser è piena o bloccata (in modalità privata succede) — la lista a schermo funziona ancora, ma sparirà alla chiusura della scheda.',
+  tableShowMore: 'Mostra altri',
+  tableMoreCount: (n: number) => `altri ${n.toLocaleString('it-IT')}`,
+  tableSelectShown: (n: number) => `Aggiungi queste ${n.toLocaleString('it-IT')}`,
 };

@@ -1,3 +1,5 @@
+import { SmartPackId } from '../types';
+
 export const en = {
   appName: 'Delete Me Now',
   appTagline: 'Automated rights enactment',
@@ -191,6 +193,60 @@ export const en = {
   dispatchErrorOpening: "Couldn't open the message",
   dispatchErrorPackaging: "Couldn't package the batch",
   dispatchErrorSaving: "Couldn't save the file",
+
+  packCopy: {
+    'standard': { label: 'Confirmed contacts', body: 'Every company whose address was confirmed against a published source, or proven by a request that was actually answered. Leaves out addresses that were auto-extracted and never checked.' },
+    'data-brokers': { label: 'Data brokers', body: 'Companies that collect and sell your personal information without ever dealing with you directly. Includes the whole California register, which every broker trading there is legally obliged to join.' },
+    'eu-brokers': { label: 'EU brokers', body: 'European address dealers and credit agencies that profile people who never signed up with them — Schober, Acxiom, CRIF, Bisnode, Deutsche Post Direkt and the like.' },
+    'eu-adtech': { label: 'EU ad-tech', body: 'Advertising companies operating in Europe that follow you between websites to build a profile for targeting.' },
+    'social-media': { label: 'Social media', body: 'Platforms holding your posts, messages, contacts and the behaviour they infer from all three.' },
+    'telecom': { label: 'Phone & internet', body: 'Carriers and internet providers. They hold call records, location history and, in some countries, what you browsed.' },
+    'credit-debt': { label: 'Credit & debt', body: 'Credit agencies score you for lenders, landlords and employers using data you never handed them. Debt collectors hold payment histories bought from someone else.' },
+    'public-body': { label: 'Public bodies', body: 'Authorities, courts and councils. Much of what they hold is kept under a legal duty, so erasure is often refused — asking what they have usually gets further.' },
+    'health-insurance': { label: 'Health & insurance', body: 'Doctors, pharmacies, health apps and insurers. This is the most sensitive category, and the law protects it most strongly.' },
+    'finance-exposure': { label: 'Money & brokers', body: 'Everyone who holds or trades your financial life: banks, insurers, credit agencies, debt collectors and data brokers.' },
+    'online-footprint': { label: 'Online footprint', body: 'The trail you leave by existing online — social platforms, ad-tech trackers and the entertainment services logging what you watch.' },
+    'full-cleanup': { label: 'Everything', body: 'Every company in the directory. The widest possible net, and a lot of letters.' },
+  } as Record<SmartPackId, { label: string; body: string }>,
+
+  wizardTitle: 'Build your list',
+  wizardStepOf: (n: number, total: number) => `Step ${n} of ${total}`,
+  wizardBack: 'Back',
+  wizardNext: 'Next',
+  wizardCancel: 'Cancel',
+  wizardCountryTitle: 'Where are you?',
+  wizardCountryBody:
+    'This sets which law you write under, what language the letters go out in, and which regulator you can escalate to.',
+  wizardGoalTitle: 'What are you trying to clean up?',
+  wizardGoalBody:
+    'Pick a starting point. You can narrow it down next, and nothing is sent until you review it.',
+  wizardGoalCount: (n: number) => `${n.toLocaleString()} companies`,
+  wizardRefineTitle: 'Narrow it down',
+  wizardRefineBody: 'All optional. Skip straight to the review if the list already looks right.',
+  wizardRefineCategory: 'Category',
+  wizardRefineRegion: 'Region',
+  wizardRefineAny: 'Any',
+  wizardRefineDpoOnly: 'Only companies with a named data protection officer',
+  wizardRefineDpoNote: 'These tend to answer more reliably.',
+  wizardRefineVerifiedOnly: 'Only confirmed contact addresses',
+  wizardRefineVerifiedNote: 'Leaves out addresses that were auto-extracted and never checked.',
+  wizardReviewTitle: 'Review your list',
+  wizardReviewEmpty: 'Nothing matches those choices. Go back and widen them.',
+  wizardReviewSample: 'A sample of what you are about to add:',
+  wizardReviewMore: (n: number) => `and ${n.toLocaleString()} more`,
+  wizardCommit: (n: number) => `Add ${n.toLocaleString()} to my list`,
+  wizardAdded: (n: number) => `Added ${n.toLocaleString()} companies to your list.`,
+  wizardPublicBodyWarning:
+    'Public authorities usually keep records they are legally required to keep, so erasure is often refused. Asking what they hold tends to get further — you can switch to an access request in your profile.',
+  wizardIdWarning: (n: number) => `${n} of these will ask you to prove who you are before acting.`,
+
+  searchSyntaxHint: 'Tips: cat:finance · region:DE · risk:high',
+  brandAliasNote: (brands: string) => `Also runs ${brands}`,
+  needsIdBadge: 'Asks for ID',
+  storageFailed: 'Your progress could not be saved. Browser storage is full or blocked (private mode does this) — the list on screen still works, but it will be gone when you close the tab.',
+  tableShowMore: 'Show more',
+  tableMoreCount: (n: number) => `${n.toLocaleString()} more`,
+  tableSelectShown: (n: number) => `Add these ${n.toLocaleString()}`,
 };
 
 export type Translations = typeof en;

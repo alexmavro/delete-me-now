@@ -10,6 +10,7 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
+import { fileURLToPath } from 'url';
 import { execFileSync } from 'child_process';
 import { mapCategories } from './category-map';
 import { getDpaForCountry, DPA_DIRECTORY } from './dpa-directory';
@@ -19,26 +20,31 @@ import { loadEuBrokers } from './sources/eu-brokers';
 import { loadPrcBrokers } from './sources/prc-brokers';
 import type { ExternalBroker } from './sources/util';
 
+// The package is ESM, so there is no ambient __dirname to resolve against.
+const scriptDir = path.dirname(fileURLToPath(import.meta.url));
+
 const REPO_URL = 'https://github.com/datenanfragen/data.git';
-const TEMP_DIR = path.join(__dirname, '../_upstream_data');
-const OUTPUT_FILE = path.join(__dirname, '../generated-services.json');
-const DPA_OUTPUT_FILE = path.join(__dirname, '../generated-dpa-directory.json');
-const RECOMMENDATIONS_OUTPUT = path.join(__dirname, '../generated-recommendations.json');
+const TEMP_DIR = path.join(scriptDir, '../_upstream_data');
+const OUTPUT_FILE = path.join(scriptDir, '../generated-services.json');
+const DPA_OUTPUT_FILE = path.join(scriptDir, '../generated-dpa-directory.json');
+const RECOMMENDATIONS_OUTPUT = path.join(scriptDir, '../generated-recommendations.json');
 
 // Optional broker registry CSVs. If present, merged after Datenanfragen.
-// Sources: California AG broker registry (oag.ca.gov/data-broker) and
-// Vermont SoS broker registry (sos.vermont.gov/corporations/other-services/
-// data-brokers/). Missing files are skipped, not an error.
-const CA_BROKERS_CSV = path.join(__dirname, '../_data_sources/ca-brokers.csv');
-const VT_BROKERS_CSV = path.join(__dirname, '../_data_sources/vt-brokers.csv');
+// California: cppa.ca.gov/data_broker_registry/ — download
+// `complete-reg-data-brokers.csv` and save it as `ca-brokers.csv`.
+// Vermont: registered brokers are published through the Secretary of State's
+// business-filings portal, which serves no bulk export.
+// Missing files are skipped, not an error.
+const CA_BROKERS_CSV = path.join(scriptDir, '../_data_sources/ca-brokers.csv');
+const VT_BROKERS_CSV = path.join(scriptDir, '../_data_sources/vt-brokers.csv');
 // EEA shortlist sourced from public DPA enforcement actions and GDPRhub
 // case index. Curator-maintained, lower coverage than the statutory
 // CA/VT registries, but pulls in EEA-resident brokers those can't see.
-const EU_BROKERS_CSV = path.join(__dirname, '../_data_sources/eu-brokers.csv');
+const EU_BROKERS_CSV = path.join(scriptDir, '../_data_sources/eu-brokers.csv');
 // Privacy Rights Clearinghouse data-broker list (US, ~600 entries,
 // hand-maintained nonprofit since 2014). Adds people-search +
 // background-check long-tail beyond the CA/VT statutory registries.
-const PRC_BROKERS_CSV = path.join(__dirname, '../_data_sources/prc-brokers.csv');
+const PRC_BROKERS_CSV = path.join(scriptDir, '../_data_sources/prc-brokers.csv');
 
 // Map Datenanfragen country folder names to our Region codes
 const COUNTRY_TO_REGION: Record<string, string> = {
@@ -105,6 +111,11 @@ interface ServiceOutput {
   lastVerified?: string;
   relevantDpa?: string;
   dpaComplaintUrl?: string;
+  alsoKnownAs?: string[];
+  needsIdDocument?: boolean;
+  declaredRequestRoute?: string;
+  registryName?: string;
+  registeredSince?: string;
 }
 
 // Datenanfragen sources are an array of `{url, last-checked}` objects (the
@@ -124,6 +135,49 @@ function pickLastVerified(sources: unknown): string | undefined {
     if (!best || lc > best) best = lc;
   }
   return best;
+}
+
+/**
+ * Refuses an import that would drop registry rows the shipped dataset already
+ * has. Set REGISTRY_SHRINK_OK=1 to override when the loss is intended.
+ */
+function assertNoRegistryRegression(loaded: ExternalBroker[]): void {
+  if (!fs.existsSync(OUTPUT_FILE)) return;
+
+  let shipped: { source?: string }[];
+  try {
+    shipped = JSON.parse(fs.readFileSync(OUTPUT_FILE, 'utf8'));
+  } catch {
+    return; // Unreadable existing dataset is not evidence of anything.
+  }
+
+  const countBySource = (rows: { source?: string }[]) => {
+    const m = new Map<string, number>();
+    for (const r of rows) {
+      if (r.source && r.source !== 'datarequests' && r.source !== 'manual') {
+        m.set(r.source, (m.get(r.source) || 0) + 1);
+      }
+    }
+    return m;
+  };
+
+  const before = countBySource(shipped);
+  const after = countBySource(loaded.map((b) => ({ source: b.source })));
+  const lost = [...before.entries()].filter(([src, n]) => (after.get(src) || 0) < n);
+  if (lost.length === 0) return;
+
+  const detail = lost.map(([src, n]) => `${src}: ${n} → ${after.get(src) || 0}`).join(', ');
+  if (process.env.REGISTRY_SHRINK_OK === '1') {
+    console.warn(`\nRegistry rows shrinking (${detail}) — proceeding, REGISTRY_SHRINK_OK is set.`);
+    return;
+  }
+  console.error(
+    `\nRefusing to write: this import loses registry rows (${detail}).\n` +
+      `The source CSVs in _data_sources/ are missing or unreadable. Restore them\n` +
+      `(see scripts/import-services.ts for where each comes from), or re-run with\n` +
+      `REGISTRY_SHRINK_OK=1 if the loss is intended.`,
+  );
+  process.exit(1);
 }
 
 function main() {
@@ -152,8 +206,6 @@ function main() {
   console.log(`Found ${files.length} company files`);
 
   const services: ServiceOutput[] = [];
-  const categoryStats = new Map<string, number>();
-  const regionStats = new Map<string, number>();
   let skippedFiles = 0;
   let skippedNoContact = 0;
   let skippedNoName = 0;
@@ -201,12 +253,19 @@ function main() {
       // At least one contact method required
       if (!contacts.dpo && !contacts.privacy && !contacts.general) { skippedNoContact++; continue; }
 
-      // Confidence based on Datenanfragen quality + sources
+      // Upstream grades every record as tested (a request was actually sent
+      // and answered), verified (contacts confirmed against a cited source),
+      // or scraped (machine-extracted, nobody checked). The first two are
+      // trustworthy; scraped contacts are a guess, so they carry the tier
+      // that keeps them out of the default breadth and inside speculative
+      // mode. An earlier revision OR'd in "has any source", which every
+      // record satisfies, collapsing all three grades into Verified and
+      // silently turning the confidence filters into no-ops.
       let confidence: string;
-      if (data.quality === 'verified' || (Array.isArray(data.sources) && data.sources.length > 0)) {
+      if (data.quality === 'verified' || data.quality === 'tested') {
         confidence = 'Verified';
-      } else if (data.quality === 'tested') {
-        confidence = 'Verified';
+      } else if (data.quality === 'scraped') {
+        confidence = 'Inferred';
       } else {
         confidence = 'Community';
       }
@@ -217,6 +276,14 @@ function main() {
 
       const slug = data.slug || slugify(data.name);
       const id = `dr-${countryCode || 'gl'}-${slug}`;
+
+      // People search for the brand on their bank statement, not the legal
+      // entity that answers the letter — nobody looks up "1&1 Mail & Media
+      // GmbH" to reach GMX. Upstream records the brands each entity runs, so
+      // carry them as search aliases; the row itself stays the legal entity.
+      const alsoKnownAs = (Array.isArray(data.runs) ? data.runs : [])
+        .map((r: unknown) => String(r).trim())
+        .filter((r: string) => r && r !== data.name);
 
       const service: ServiceOutput = {
         id,
@@ -229,6 +296,8 @@ function main() {
         contacts,
         confidence,
         source: 'datarequests',
+        alsoKnownAs: alsoKnownAs.length > 0 ? alsoKnownAs : undefined,
+        needsIdDocument: data['needs-id-document'] === true ? true : undefined,
         lastVerified: pickLastVerified(data.sources),
         relevantDpa: dpa?.name,
         dpaComplaintUrl: dpa?.complaintUrl,
@@ -237,8 +306,6 @@ function main() {
       services.push(service);
 
       // Stats
-      for (const c of categories) categoryStats.set(c, (categoryStats.get(c) || 0) + 1);
-      for (const r of regions) regionStats.set(r, (regionStats.get(r) || 0) + 1);
     } catch (err) {
       // JSON parse error, encoding issue, or schema drift in upstream
       // Datenanfragen. Surface so a sudden cluster of failures is visible
@@ -271,6 +338,12 @@ function main() {
   // for Datenanfragen rows, this stamp only matters for registry-only rows.
   const registryImportedAt = new Date().toISOString().slice(0, 10);
   console.log(`\nLoaded ${externalBrokers.length} entries from external broker registries`);
+
+  // The source CSVs are gitignored, so a fresh clone has none and this import
+  // would quietly rewrite the dataset without them — dropping every registry
+  // broker and leaving a plausible-looking file behind. Refuse instead: an
+  // import that silently deletes hundreds of targets is the worst outcome here.
+  assertNoRegistryRegression(externalBrokers);
 
   const bySlug = new Map<string, ServiceOutput>();
   for (const s of services) bySlug.set(s.slug.toLowerCase(), s);
@@ -348,14 +421,14 @@ function main() {
       continue;
     }
     // Source-aware confidence + region.
-    // - Statutory registries (CA/VT): Verified by construction, US-only.
+    // - Statutory registries (CA/VT): Verified by construction.
     // - PRC: Community (curator-maintained nonprofit, not a legal
-    //   disclosure obligation), US-only by source scope.
+    //   disclosure obligation).
     // - EU shortlist: Community, region derived from headquarter country
     //   (case-folded against the lowercase-keyed map), with EEA-fallback
     //   when the country code is unmapped.
     const isStatutory = eb.source === 'ca-broker-registry' || eb.source === 'vt-broker-registry';
-    const isUsOnly = isStatutory || eb.source === 'prc-brokers';
+    const isUsBroker = isStatutory || eb.source === 'prc-brokers';
     const ccLower = (eb.headquarterCountry || '').toLowerCase();
     const mappedRegion = ccLower ? COUNTRY_TO_REGION[ccLower] : undefined;
     if (eb.source === 'eu-brokers' && !mappedRegion) {
@@ -368,18 +441,24 @@ function main() {
         console.warn(`eu-brokers: unmapped country '${eb.headquarterCountry}' for '${eb.name}', falling back to region 'EU'`);
       }
     }
-    const region = isUsOnly ? 'US' : (mappedRegion || 'EU');
+    // Registration state is where a broker filed paperwork, not the limit of
+    // whose data it trades. Tagging these US-only hid them from any EU user
+    // who narrowed by region, which is exactly who Art. 3(2)(b) lets write.
+    const regions = isUsBroker ? ['US', 'Global'] : [mappedRegion || 'EU'];
     services.push({
       id: eb.id,
       name: eb.name,
       slug: eb.slug,
       url: eb.url,
       categories: ['Data Broker'],
-      regions: [region],
+      regions,
       headquarterCountry: eb.headquarterCountry || undefined,
       contacts,
       confidence: isStatutory ? 'Verified' : 'Community',
       source: eb.source,
+      declaredRequestRoute: eb.declaredRequestRoute,
+      registryName: eb.registryName,
+      registeredSince: eb.registeredSince,
       // Stamp at import time. Registry CSVs are downloaded manually on an
       // annual cadence (no per-row `last-checked` like Datenanfragen has),
       // so the import run is the verification event for these rows.
@@ -435,14 +514,27 @@ function main() {
   fs.writeFileSync(RECOMMENDATIONS_OUTPUT, JSON.stringify(recommendations, null, 2));
   console.log(`Recommendations → ${RECOMMENDATIONS_OUTPUT}`);
 
-  // Stats
+  // Counted over what actually shipped rather than the parse loop's running
+  // tallies, which stop before the registry merge and so report a broker
+  // count that ignores every registry row the merge just appended.
+  const tally = (pick: (s: ServiceOutput) => string[]): Map<string, number> => {
+    const m = new Map<string, number>();
+    for (const s of services) for (const v of pick(s)) m.set(v, (m.get(v) || 0) + 1);
+    return m;
+  };
+
   console.log('\nCategory distribution:');
-  [...categoryStats.entries()]
+  [...tally((s) => s.categories).entries()]
     .sort((a, b) => b[1] - a[1])
     .forEach(([cat, count]) => console.log(`  ${cat}: ${count}`));
 
+  console.log('\nConfidence distribution:');
+  [...tally((s) => [s.confidence]).entries()]
+    .sort((a, b) => b[1] - a[1])
+    .forEach(([tier, count]) => console.log(`  ${tier}: ${count}`));
+
   console.log('\nRegion distribution (top 15):');
-  [...regionStats.entries()]
+  [...tally((s) => s.regions).entries()]
     .sort((a, b) => b[1] - a[1])
     .slice(0, 15)
     .forEach(([region, count]) => console.log(`  ${region}: ${count}`));

@@ -18,6 +18,7 @@ interface Props {
   intentPacks: PackLink[];
   packs: PackLink[];
   onSelectPack: (id: SmartPackId) => void;
+  onStartWizard: () => void;
   profile: UserProfile;
   onOpenProfile: () => void;
   t: Translations;
@@ -48,7 +49,7 @@ function NavItem({
   );
 }
 
-export function MobileDrawer({ isOpen, onClose, view, onSetView, counts, intentPacks, packs, onSelectPack, profile, onOpenProfile, t }: Props) {
+export function MobileDrawer({ isOpen, onClose, view, onSetView, counts, intentPacks, packs, onSelectPack, onStartWizard, profile, onOpenProfile, t }: Props) {
   useEffect(() => {
     if (!isOpen) return;
     const handler = (e: KeyboardEvent) => {
@@ -85,7 +86,7 @@ export function MobileDrawer({ isOpen, onClose, view, onSetView, counts, intentP
 
         <button
           type="button"
-          onClick={() => navigate('all')}
+          onClick={onStartWizard}
           className="flex items-center gap-2 mx-0.5 mt-3 mb-2 px-3 py-2 rounded-lg border border-rule-strong bg-canvas-elevated shadow-sm text-[13px] font-medium hover:border-accent hover:text-accent transition-colors"
         >
           <Icon name="plus" size={15} /> {t.sidebarAddTargets}
@@ -107,7 +108,7 @@ export function MobileDrawer({ isOpen, onClose, view, onSetView, counts, intentP
           <div className="mt-3">
             <div className="px-2.5 pt-2 pb-1 text-[11px] font-semibold uppercase tracking-[0.04em] text-ink-tertiary">{t.sidebarStartHere}</div>
             {intentPacks.map((p) => (
-              <NavItem key={p.id} label={p.label} onClick={() => selectPack(p.id)} />
+              <NavItem key={p.id} label={p.label} count={p.count} onClick={() => selectPack(p.id)} />
             ))}
           </div>
         )}
@@ -116,7 +117,7 @@ export function MobileDrawer({ isOpen, onClose, view, onSetView, counts, intentP
           <div className="mt-3">
             <div className="px-2.5 pt-2 pb-1 text-[11px] font-semibold uppercase tracking-[0.04em] text-ink-tertiary">{t.sidebarQuickLists}</div>
             {packs.map((p) => (
-              <NavItem key={p.id} label={p.label} onClick={() => selectPack(p.id)} />
+              <NavItem key={p.id} label={p.label} count={p.count} onClick={() => selectPack(p.id)} />
             ))}
           </div>
         )}

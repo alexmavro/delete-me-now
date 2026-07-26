@@ -53,6 +53,79 @@ const speculativeClause: Record<Language, string> = {
   IT: `\nSe non ho un account attivo, verificare anche l'eventuale presenza di profili ombra, liste di marketing o dati di terze parti collegati ai miei dati.`,
 };
 
+export interface ControllerFacts {
+  /** Established inside the EEA. Non-EEA controllers get the Art. 3(2) block. */
+  isEea: boolean;
+  registryName?: string;
+  declaredRequestRoute?: string;
+  registeredSince?: string;
+}
+
+// Extra demands for a controller outside the EEA. Two things carry the weight:
+// the company's own filing with its regulator, which forecloses both "we hold
+// nothing about you" and "that is not how you contact us"; and Art. 27, where
+// either answer helps — a named representative is an EU address to escalate
+// against, and no representative is a second infringement for the complaint.
+function foreignControllerBlock(lang: Language, c: ControllerFacts): string {
+  if (c.isEea) return '';
+
+  const since = c.registeredSince ? ` (registered ${c.registeredSince})` : '';
+  const hasFiling = !!(c.registryName && c.declaredRequestRoute);
+
+  const filing: Record<Language, string> = {
+    EN: `You are recorded on the ${c.registryName}${since} as a registered data broker. That registration is itself a declaration that you collect and sell personal information about people with whom you have no direct relationship.\n\nIn that registration you stated that requests are made as follows: "${c.declaredRequestRoute}". I am relying on that declaration. If it is inaccurate, you are obliged to correct it with the regulator.\n\n`,
+    DE: `Sie sind im ${c.registryName}${since} als Datenhändler eingetragen. Diese Eintragung ist bereits die Erklärung, dass Sie personenbezogene Daten von Personen erheben und verkaufen, zu denen Sie keine direkte Beziehung unterhalten.\n\nIn dieser Eintragung haben Sie angegeben, dass Anträge wie folgt zu stellen sind: „${c.declaredRequestRoute}". Ich stütze mich auf diese Erklärung. Sollte sie unzutreffend sein, sind Sie verpflichtet, sie gegenüber der Aufsichtsbehörde zu berichtigen.\n\n`,
+    FR: `Vous figurez au ${c.registryName}${since} en tant que courtier en données enregistré. Cet enregistrement constitue en lui-même une déclaration selon laquelle vous collectez et vendez des données personnelles concernant des personnes avec lesquelles vous n'entretenez aucune relation directe.\n\nDans cet enregistrement, vous avez indiqué que les demandes s'effectuent comme suit : « ${c.declaredRequestRoute} ». Je me fonde sur cette déclaration. Si elle est inexacte, il vous appartient de la rectifier auprès du régulateur.\n\n`,
+    ES: `Usted figura en el ${c.registryName}${since} como intermediario de datos registrado. Ese registro constituye en sí mismo una declaración de que recopila y vende datos personales de personas con las que no mantiene ninguna relación directa.\n\nEn dicho registro usted declaró que las solicitudes se presentan del siguiente modo: «${c.declaredRequestRoute}». Me baso en esa declaración. Si es inexacta, le corresponde rectificarla ante el regulador.\n\n`,
+    IT: `Risultate iscritti al ${c.registryName}${since} come intermediari di dati. Tale iscrizione costituisce di per sé una dichiarazione che raccogliete e vendete dati personali di persone con cui non intrattenete alcun rapporto diretto.\n\nIn tale iscrizione avete indicato che le richieste si presentano come segue: "${c.declaredRequestRoute}". Mi baso su tale dichiarazione. Qualora fosse inesatta, siete tenuti a rettificarla presso l'autorità.\n\n`,
+  };
+
+  const demands: Record<Language, string> = {
+    EN: `Although you are not established in the European Union, Article 3(2)(b) GDPR applies to you in respect of my data, because monitoring the behaviour of people located in the Union brings you within the Regulation's territorial scope. Accordingly I require:
+
+1. Erasure of all personal data relating to me (Article 17).
+2. The source from which you obtained my data, including the specific supplier (Article 15(1)(g)).
+3. The identity of every recipient you have disclosed my data to, and confirmation that you have notified each of them of this erasure (Articles 15(1)(c), 19).
+4. The name and contact details of your representative in the Union (Article 27). If you have not designated one, please say so explicitly.
+
+You have one month (Article 12(3)). If you decline, you must tell me why in writing within the same period (Article 12(4)). Absent a reply I will complain to my supervisory authority under Article 77, which for a controller with no Union establishment is the authority of my own country, and I will include your failure to designate a representative in that complaint.`,
+    DE: `Auch wenn Sie nicht in der Europäischen Union niedergelassen sind, findet Art. 3 Abs. 2 lit. b DSGVO auf Sie Anwendung, soweit es meine Daten betrifft, da die Beobachtung des Verhaltens von Personen in der Union den räumlichen Anwendungsbereich der Verordnung eröffnet. Ich fordere daher:
+
+1. Löschung sämtlicher mich betreffender personenbezogener Daten (Art. 17).
+2. Die Quelle, aus der Sie meine Daten erhalten haben, einschließlich des konkreten Lieferanten (Art. 15 Abs. 1 lit. g).
+3. Die Identität aller Empfänger, denen Sie meine Daten offengelegt haben, sowie die Bestätigung, dass Sie jeden von ihnen über diese Löschung unterrichtet haben (Art. 15 Abs. 1 lit. c, Art. 19).
+4. Namen und Kontaktdaten Ihres Vertreters in der Union (Art. 27). Falls Sie keinen benannt haben, teilen Sie mir dies bitte ausdrücklich mit.
+
+Ihnen steht ein Monat zur Verfügung (Art. 12 Abs. 3). Sollten Sie ablehnen, haben Sie mir die Gründe innerhalb derselben Frist schriftlich mitzuteilen (Art. 12 Abs. 4). Bleibt eine Antwort aus, werde ich Beschwerde bei meiner Aufsichtsbehörde nach Art. 77 erheben — bei einem Verantwortlichen ohne Niederlassung in der Union ist dies die Behörde meines eigenen Landes — und dabei auch die unterbliebene Benennung eines Vertreters zur Anzeige bringen.`,
+    FR: `Bien que vous ne soyez pas établi dans l'Union européenne, l'article 3, paragraphe 2, point b) du RGPD vous est applicable s'agissant de mes données, le suivi du comportement de personnes situées dans l'Union faisant entrer votre activité dans le champ d'application territorial du Règlement. En conséquence, j'exige :
+
+1. L'effacement de toutes les données personnelles me concernant (article 17).
+2. La source auprès de laquelle vous avez obtenu mes données, y compris le fournisseur précis (article 15(1)(g)).
+3. L'identité de chaque destinataire à qui vous avez communiqué mes données, ainsi que la confirmation que vous les avez tous informés de cet effacement (articles 15(1)(c) et 19).
+4. Le nom et les coordonnées de votre représentant dans l'Union (article 27). Si vous n'en avez désigné aucun, veuillez l'indiquer expressément.
+
+Vous disposez d'un mois (article 12(3)). En cas de refus, vous devez m'en indiquer les motifs par écrit dans le même délai (article 12(4)). À défaut de réponse, je saisirai mon autorité de contrôle au titre de l'article 77, laquelle, pour un responsable du traitement sans établissement dans l'Union, est celle de mon propre pays, et je signalerai également l'absence de désignation d'un représentant.`,
+    ES: `Aunque usted no está establecido en la Unión Europea, el artículo 3(2)(b) del RGPD le resulta aplicable en lo que respecta a mis datos, ya que la observación del comportamiento de personas situadas en la Unión activa el ámbito territorial del Reglamento. En consecuencia, exijo:
+
+1. La supresión de todos los datos personales que me conciernen (artículo 17).
+2. La fuente de la que obtuvo mis datos, incluido el proveedor concreto (artículo 15(1)(g)).
+3. La identidad de cada destinatario al que haya comunicado mis datos, así como la confirmación de que ha notificado a todos ellos esta supresión (artículos 15(1)(c) y 19).
+4. El nombre y los datos de contacto de su representante en la Unión (artículo 27). Si no ha designado ninguno, indíquelo expresamente.
+
+Dispone de un mes (artículo 12(3)). Si lo deniega, debe comunicarme los motivos por escrito dentro del mismo plazo (artículo 12(4)). A falta de respuesta, presentaré una reclamación ante mi autoridad de control al amparo del artículo 77 —que, tratándose de un responsable sin establecimiento en la Unión, es la de mi propio país— e incluiré en ella la falta de designación de representante.`,
+    IT: `Sebbene non siate stabiliti nell'Unione europea, l'articolo 3(2)(b) del GDPR vi si applica per quanto riguarda i miei dati, poiché il monitoraggio del comportamento di persone che si trovano nell'Unione fa scattare l'ambito di applicazione territoriale del Regolamento. Di conseguenza richiedo:
+
+1. La cancellazione di tutti i dati personali che mi riguardano (articolo 17).
+2. La fonte da cui avete ottenuto i miei dati, compreso il fornitore specifico (articolo 15(1)(g)).
+3. L'identità di ogni destinatario a cui avete comunicato i miei dati, nonché la conferma di aver notificato a ciascuno di essi la presente cancellazione (articoli 15(1)(c) e 19).
+4. Il nome e i recapiti del vostro rappresentante nell'Unione (articolo 27). Qualora non ne abbiate designato alcuno, siete pregati di dichiararlo espressamente.
+
+Avete un mese di tempo (articolo 12(3)). In caso di rifiuto, dovete comunicarmene per iscritto le ragioni entro lo stesso termine (articolo 12(4)). In assenza di riscontro presenterò reclamo alla mia autorità di controllo ai sensi dell'articolo 77 — che, per un titolare privo di stabilimento nell'Unione, è quella del mio paese — segnalando altresì la mancata designazione di un rappresentante.`,
+  };
+
+  return `\n\n${hasFiling ? filing[lang] : ''}${demands[lang]}`;
+}
+
 const IDENTITY_LABELS: Record<Language, { fullName: string; address: string; phone: string }> = {
   EN: { fullName: 'Full Name', address: 'Address', phone: 'Phone' },
   DE: { fullName: 'Name', address: 'Adresse', phone: 'Telefon' },
@@ -413,11 +486,17 @@ export function generateGdprEmail(
   serviceName: string,
   user: EffectiveProfile,
   style: TemplateStyle,
+  controller?: ControllerFacts,
 ): GeneratedEmail {
   const lang = user.language;
   const gender: Gender = user.gender ?? 'N';
   const eu = user.isEuCitizen ? euClauseFor(lang, gender) + '\n\n' : '';
-  const speculative = user.includeSpeculative ? speculativeClause[lang] : '';
+  // Rides the speculative slot, which every renderer already places after the
+  // subject details and before the sign-off — the right spot for it, and it
+  // keeps all fifteen style/language renderers untouched.
+  const speculative =
+    (user.includeSpeculative ? speculativeClause[lang] : '') +
+    (controller ? foreignControllerBlock(lang, controller) : '');
   const identity = buildIdentity(user, lang);
   const ps = psBlockFor(lang, gender);
 

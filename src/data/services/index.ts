@@ -2,10 +2,10 @@ import { Service, RequestStatus, ServiceCategory, Region, ConfidenceLevel, DataS
 import GENERATED_DB from '../../../generated-services.json';
 
 const VALID_CATEGORIES: ReadonlySet<string> = new Set([
-  'Social', 'Shopping', 'Utility', 'Data Broker', 'Ad Tech', 'Analytics',
-  'Finance', 'Insurance', 'Travel', 'Telecom', 'Health', 'Government',
-  'Education', 'Entertainment', 'News & Media', 'Cloud & Hosting',
-  'IoT & Smart Home', 'Other', 'Imported',
+  'Social', 'Shopping', 'Utility', 'Data Broker', 'Ad Tech',
+  'Finance', 'Credit Agency', 'Debt Collection', 'Insurance', 'Travel',
+  'Telecom', 'Health', 'Public Body', 'Political Party', 'Education',
+  'Religious', 'Nonprofit', 'Entertainment', 'Uncategorised', 'Imported',
 ]);
 
 const VALID_REGIONS: ReadonlySet<string> = new Set([
@@ -87,7 +87,7 @@ function parseContacts(raw: unknown, emailFallback: unknown): Service['contacts'
 const generatedServices: Service[] = (GENERATED_DB as Record<string, unknown>[]).map((s) => {
   const fallbackCategory = typeof s['category'] === 'string' && VALID_CATEGORIES.has(s['category'])
     ? (s['category'] as ServiceCategory)
-    : 'Other';
+    : 'Uncategorised';
   const fallbackRegion = typeof s['region'] === 'string' && VALID_REGIONS.has(s['region'])
     ? (s['region'] as Region)
     : 'Global';
@@ -109,6 +109,13 @@ const generatedServices: Service[] = (GENERATED_DB as Record<string, unknown>[])
     lastVerified: typeof s['lastVerified'] === 'string' ? s['lastVerified'] : undefined,
     relevantDpa: typeof s['relevantDpa'] === 'string' ? s['relevantDpa'] : undefined,
     dpaComplaintUrl: typeof s['dpaComplaintUrl'] === 'string' ? s['dpaComplaintUrl'] : undefined,
+    alsoKnownAs: Array.isArray(s['alsoKnownAs'])
+      ? (s['alsoKnownAs'] as unknown[]).filter((v): v is string => typeof v === 'string')
+      : undefined,
+    needsIdDocument: s['needsIdDocument'] === true ? true : undefined,
+    declaredRequestRoute: typeof s['declaredRequestRoute'] === 'string' ? s['declaredRequestRoute'] : undefined,
+    registryName: typeof s['registryName'] === 'string' ? s['registryName'] : undefined,
+    registeredSince: typeof s['registeredSince'] === 'string' ? s['registeredSince'] : undefined,
     selected: false,
     status: RequestStatus.PENDING,
     notes: typeof s['notes'] === 'string' ? s['notes'] : undefined,

@@ -2,6 +2,7 @@ import { Service, UserProfile } from '../../types';
 import { Translations } from '../../locales';
 import { Modal } from '../ui/Modal';
 import { generateEmail } from '../../templates';
+import { controllerFacts } from '../../utils/derive-jurisdiction';
 import { controllerLanguage } from '../../utils/controller-language';
 import { getBestEmail } from '../../utils/contacts';
 
@@ -28,6 +29,7 @@ export function LetterPreview({ service, profile, onClose, onSend, t }: Props) {
   const email = generateEmail(service.name, profile, {
     category: service.categories[0],
     languageOverride: lang,
+    controller: controllerFacts(service),
   });
   const to = getBestEmail(service.contacts) ?? '—';
 
